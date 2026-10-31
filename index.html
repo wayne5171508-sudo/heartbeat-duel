@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1c0b22">
+<title>心跳對決</title>
+<style>
+  :root{--pink:#ff4f9a;--blue:#45b4ff;--ink:#fff;--muted:#c9a9cf;--card:#2b1233;--line:#5a2a63;--bg:#1c0b22;--btn:#45204f}
+  body.cute{--ink:#5b3a6e;--muted:#9a7aa8;--card:#fffafd;--line:#f5d6e6;--bg:#fff0f7;--btn:#fde3ef}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;overscroll-behavior:none;
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;
+    background:rgba(20,6,26,.6);backdrop-filter:blur(4px);z-index:5;touch-action:auto}
+  body.cute .screen{background:rgba(255,220,236,.55)}
+  .screen.show{display:flex}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;width:100%;max-width:420px;
+    max-height:100%;overflow:auto;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  h1{margin:4px 0;font-size:32px;letter-spacing:3px;background:linear-gradient(90deg,#ff6fb0,#ffb36b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{margin:0 0 8px;font-size:22px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.6}
+  label{display:block;text-align:left;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  input{width:100%;font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);text-align:center}
+  .stepper{display:flex;align-items:center;gap:10px;justify-content:center}
+  .stepper button{width:42px;height:42px;padding:0;font-size:22px;margin:0}
+  .stepper b{font-size:20px;min-width:70px}
+  button{font:inherit;font-size:16px;border:0;border-radius:14px;padding:11px 14px;cursor:pointer;background:var(--btn);color:var(--ink);width:100%;margin-top:8px}
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.4}
+  button.primary{background:linear-gradient(90deg,#ff4f9a,#ff8a5c);font-weight:700;color:#fff}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .row{display:flex;gap:8px}
+  .row button{flex:1;white-space:nowrap}
+  .row input{flex:1;min-width:0}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;margin:0;padding:9px 4px;font-size:14px}
+  .seg button.on{background:linear-gradient(90deg,#ff4f9a,#ff8a5c);color:#fff;font-weight:700}
+  .avatars button{font-size:24px;padding:6px}
+  .code{font-size:42px;letter-spacing:10px;font-weight:800;color:#ff7ab5;margin:4px 0}
+  .vs{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0}
+  .pl{flex:1;background:var(--bg);border-radius:14px;padding:8px 6px}
+  .pl .n{font-weight:700}
+  .pl .c{font-size:12px;color:var(--muted);margin-top:3px}
+  .pl.host .n{color:#ff5fa2} .pl.guest .n{color:#3fa2ef}
+  .big{font-size:50px;margin:2px 0}
+  .small{font-size:12px;color:var(--muted);line-height:1.6}
+  .stats{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.7}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+  .pcard{border-radius:16px;padding:12px 10px;text-align:left;border:2px solid transparent;cursor:pointer;color:#fff;min-height:96px;position:relative}
+  .pcard .ty{font-size:12px;font-weight:800;opacity:.9;margin-bottom:4px}
+  .pcard .tx{font-size:15px;line-height:1.45;font-weight:600}
+  .pcard.sel{border-color:#fff;box-shadow:0 0 0 3px #ff4f9a}
+  .pcard.big{font-size:inherit;cursor:default}
+  .ty-撒嬌{background:linear-gradient(135deg,#ff9ac6,#ff6fa8)} .ty-真心話{background:linear-gradient(135deg,#9a8cff,#6e63e0)}
+  .ty-大冒險{background:linear-gradient(135deg,#ffb36b,#ff7d4f)} .ty-任務{background:linear-gradient(135deg,#4fd1b0,#2ea88c)}
+  .ty-脫衣{background:linear-gradient(135deg,#ff4f6d,#c41c55)} .ty-終極{background:linear-gradient(135deg,#ffcc3d,#ff6b3d)}
+  #toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 14px;border-radius:12px;
+    font-size:13px;z-index:9;display:none;max-width:90%;text-align:center}
+  #hud{position:fixed;inset:0;z-index:4;display:none;pointer-events:none}
+  #btnGiveUp{position:absolute;right:10px;top:38px;width:auto;font-size:12px;padding:6px 10px;margin:0;background:rgba(0,0,0,.35);color:#fff;pointer-events:auto}
+  #btnItem{position:absolute;left:50%;top:38px;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;padding:0;margin:0;font-size:30px;
+    background:rgba(255,79,154,.85);box-shadow:0 0 18px #ff4f9a;pointer-events:auto;display:none}
+  #raiseModal{position:fixed;inset:0;z-index:7;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.55)}
+  #raiseModal.show{display:flex}
+  #btnSound{position:fixed;left:10px;top:calc(env(safe-area-inset-top) + 44px);z-index:10;width:44px;height:44px;margin:0;padding:0;border-radius:50%;font-size:16px;
+    background:rgba(0,0,0,.35);color:#fff;border:1px solid rgba(255,255,255,.15)}
+  body.sultry #btnSound{border-color:rgba(212,162,76,.4)}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:8px;background:#ff4f9a;color:#fff;font-weight:700}
+  .pcard .by{font-size:11px;margin-top:6px;opacity:.9}
+  .ty-自訂{background:linear-gradient(135deg,#7a5cff,#ff4f9a)}
+  .pcard.void{opacity:.35;text-decoration:line-through}
+  .mine{display:flex;align-items:center;gap:6px;text-align:left;font-size:13px;background:var(--bg);border-radius:10px;padding:6px 8px;margin-top:6px}
+  .mine span{flex:1}
+  .mine button{width:auto;margin:0;padding:4px 9px;font-size:12px}
+  #nTimer{font-size:26px;font-weight:800;color:#ff4f9a;margin:4px 0}
+  #nTimer.late{color:#e0002f;animation:blink .6s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .bet{background:var(--bg);border-radius:14px;padding:10px;margin:8px 0;font-size:15px;line-height:1.6}
+
+  /* ===== 🍷 慾火主題：酒紅絲絨＋金邊＋燭光 ===== */
+  body.sultry{--ink:#f6e7e1;--muted:#c9a39a;--card:rgba(34,6,13,.9);--line:rgba(212,162,76,.38);--bg:#12030a;--btn:rgba(110,18,38,.6);
+    --crimson:#c8102e;--rose:#e8a0a8;--gold:#d4a24c}
+  body.sultry .screen{background:radial-gradient(ellipse at 50% 40%,rgba(90,10,28,.55),rgba(8,1,4,.82) 75%);backdrop-filter:blur(6px)}
+  body.sultry .card{border:1px solid var(--line);box-shadow:0 0 0 1px rgba(212,162,76,.12) inset,0 18px 60px rgba(0,0,0,.6),0 0 80px rgba(200,16,46,.18);
+    background:linear-gradient(160deg,rgba(52,9,20,.94),rgba(22,4,10,.94))}
+  body.sultry h1,body.sultry h2{font-family:"Noto Serif TC",serif;font-weight:700;letter-spacing:4px}
+  body.sultry h1{font-size:38px;background:linear-gradient(90deg,#f3c98b,#e8a0a8 50%,#d4a24c);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(232,160,168,.25)}
+  body.sultry h2{color:#f3d6c8}
+  body.sultry .sub{font-family:"Noto Serif TC",serif;color:#d9b3a8;letter-spacing:1px}
+  body.sultry button{transition:transform .15s,box-shadow .2s,background .2s}
+  body.sultry button.primary{background:linear-gradient(100deg,#8e0b25,#c8102e 45%,#b8862f);box-shadow:0 6px 24px rgba(200,16,46,.45);letter-spacing:2px}
+  body.sultry button.primary:active{box-shadow:0 2px 10px rgba(200,16,46,.6)}
+  body.sultry .seg button.on{background:linear-gradient(100deg,#8e0b25,#c8102e);box-shadow:0 0 0 1px var(--gold) inset}
+  body.sultry input{background:rgba(10,2,6,.7);border-color:var(--line)}
+  body.sultry input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,162,76,.2)}
+  body.sultry .pl{background:rgba(10,2,6,.55);border:1px solid rgba(212,162,76,.15)}
+  body.sultry .pl.host .n{color:#ff6b8a} body.sultry .pl.guest .n{color:#c9a0ff}
+  body.sultry .code{color:#f3c98b;font-family:"Noto Serif TC",serif;text-shadow:0 0 18px rgba(243,201,139,.35)}
+  body.sultry .pcard{border:1px solid rgba(212,162,76,.35);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  body.sultry .pcard .tx{font-family:"Noto Serif TC",serif;font-weight:600;font-size:16px}
+  body.sultry .ty-撒嬌{background:linear-gradient(150deg,#6d1630,#b23a5e)} body.sultry .ty-真心話{background:linear-gradient(150deg,#2e1446,#6a2d7a)}
+  body.sultry .ty-大冒險{background:linear-gradient(150deg,#5a1a0e,#a8442a)} body.sultry .ty-任務{background:linear-gradient(150deg,#3a0f1f,#7e2246)}
+  body.sultry .ty-脫衣{background:linear-gradient(150deg,#0c0205,#5e0718 55%,#c8102e);border-color:var(--gold)}
+  body.sultry .ty-脫衣 .ty::before{content:"💋 "}
+  body.sultry .ty-終極{background:linear-gradient(150deg,#3a2306,#b8862f);color:#1a0508} body.sultry .ty-自訂{background:linear-gradient(150deg,#1d0a2e,#8e0b25)}
+  body.sultry .pcard.sel{box-shadow:0 0 0 2px var(--gold),0 0 28px rgba(212,162,76,.5)}
+  body.sultry #nTimer{color:#f3c98b;font-family:"Noto Serif TC",serif}
+  body.sultry #penalty .card,body.sultry #over .card{animation:heartbeat 1.6s ease-in-out infinite}
+  body.sultry .bet{background:rgba(10,2,6,.6);border:1px solid var(--line);font-family:"Noto Serif TC",serif}
+  @keyframes heartbeat{0%,100%{box-shadow:0 0 0 1px rgba(212,162,76,.12) inset,0 18px 60px rgba(0,0,0,.6),0 0 50px rgba(200,16,46,.15)}
+    15%{box-shadow:0 0 0 1px rgba(212,162,76,.25) inset,0 18px 60px rgba(0,0,0,.6),0 0 110px rgba(200,16,46,.5)}
+    30%{box-shadow:0 0 0 1px rgba(212,162,76,.12) inset,0 18px 60px rgba(0,0,0,.6),0 0 60px rgba(200,16,46,.2)}
+    45%{box-shadow:0 0 0 1px rgba(212,162,76,.25) inset,0 18px 60px rgba(0,0,0,.6),0 0 90px rgba(200,16,46,.4)}}
+  /* 懲罰卡翻牌登場 */
+  .cards .pcard{animation:flipIn .55s cubic-bezier(.2,.8,.3,1.2) both}
+  .cards .pcard:nth-child(2){animation-delay:.12s} .cards .pcard:nth-child(3){animation-delay:.24s} .cards .pcard:nth-child(4){animation-delay:.36s}
+  @keyframes flipIn{from{opacity:0;transform:perspective(600px) rotateY(80deg) translateY(10px)}to{opacity:1;transform:none}}
+  .cards.noanim .pcard{animation:none}
+  @media (prefers-reduced-motion:reduce){.cards .pcard,body.sultry #penalty .card,body.sultry #over .card{animation:none}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&display=swap">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="toast"></div>
+<button id="btnSound" aria-label="音樂和音效開關"></button>
+<div id="hud"><button id="btnItem"></button><button id="btnGiveUp">認輸</button></div>
+
+<!-- 首頁 -->
+<div class="screen show" id="home"><div class="card">
+  <h1>心跳對決</h1>
+  <p class="sub" id="homeSub">遠距離情侶的小遊戲 PK・每回合換一種遊戲<br>輸的人抽懲罰卡，願賭服輸 😈</p>
+  <label>你的名字</label>
+  <input id="name" maxlength="8" placeholder="輸入名字">
+  <label>選你的角色</label>
+  <div class="seg avatars" id="avatarSeg"></div>
+  <label>你現在身上穿幾件？（曖昧以上有脫衣卡，脫光就整場輸）</label>
+  <div class="stepper"><button id="cMinus">−</button><b id="cVal">5 件</b><button id="cPlus">＋</button></div>
+  <button class="primary" id="btnCreate">建立房間，邀請對方</button>
+  <div class="small" style="margin-top:4px">建立後可以選：小遊戲・畫面風格・懲罰辣度（甜蜜→限制級）・搶幾勝</div>
+  <div class="row">
+    <input id="joinCode" maxlength="5" placeholder="房間碼" style="text-transform:uppercase">
+    <button id="btnJoin" style="margin:0;max-width:110px">加入</button>
+  </div>
+  <div class="row"><button class="ghost" id="btnPractice">單人練習</button><button class="ghost" id="btnTheme"></button></div>
+  <a href="night.html" style="display:block;text-decoration:none"><button class="ghost" style="border-color:var(--line)">💋 夜色挑戰：真心話大冒險・愛的骰子・默契測驗</button></a>
+  <div class="stats" id="stats"></div>
+</div></div>
+
+<!-- 等候室 -->
+<div class="screen" id="lobby"><div class="card">
+  <h2 id="lobbyTitle">等待對方加入…</h2>
+  <div id="codeBox">
+    <div class="code" id="codeShow">-----</div>
+    <button id="btnShare">傳連結給對方</button>
+  </div>
+  <div class="vs"><div class="pl host"><div class="n" id="lHostN">—</div><div class="c" id="lHostC"></div></div>
+    <div>VS</div><div class="pl guest"><div class="n" id="lGuestN">等待中</div><div class="c" id="lGuestC"></div></div></div>
+  <div id="hostSettings">
+    <label>小遊戲（輪替＝每回合隨機換一種）</label><div class="seg" id="segGame"></div>
+    <label>畫面風格</label><div class="seg" id="segTheme"></div>
+    <label>懲罰辣度</label><div class="seg" id="segSpice"></div>
+    <label>搶幾勝贏整場</label><div class="stepper"><button id="tMinus">−</button><b id="tVal"></b><button id="tPlus">＋</button></div>
+  </div>
+  <div class="small" id="guestSettings" style="margin:8px 0"></div>
+  <button id="btnSecret">🤫 秘密準備：寫賭注、偷寫懲罰卡</button>
+  <div class="small" id="secretStatus" style="margin-top:6px"></div>
+  <p class="small">5 種小遊戲：🏃跑酷・🍰疊塔・🎵節拍・🧺接愛心・⚡快槍手<br>每回合開始前會顯示玩法，同一題目兩人同時比；平手自動加賽</p>
+  <button class="primary" id="btnStart" disabled>開始對決</button>
+  <button class="ghost" id="btnLeave">離開</button>
+</div></div>
+
+<!-- 秘密準備 -->
+<div class="screen" id="secret"><div class="card">
+  <h2>🤫 秘密準備</h2>
+  <p class="sub">這裡寫的東西對方看不到。<br>懲罰卡會混進卡池，抽到才揭曉是誰寫的；賭注整場結束才打開。</p>
+  <label>整場賭注：如果我輸了整場，我就…</label>
+  <input id="betInput" maxlength="40" placeholder="例如：請吃大餐、幫按摩 30 分鐘">
+  <label>偷偷寫懲罰卡（最多 6 張）</label>
+  <div class="seg" id="ctSeg"></div>
+  <div class="row" style="margin-top:6px"><input id="cardInput" maxlength="40" placeholder="寫一張懲罰…"><button id="btnAddCard" style="margin:0;max-width:80px">加入</button></div>
+  <div id="myCardList"></div>
+  <button class="primary" id="btnSecretDone">寫好了，封起來 🤐</button>
+</div></div>
+
+<!-- 挑懲罰 -->
+<div class="screen" id="pick"><div class="card">
+  <div class="big" id="kEmoji"></div>
+  <h2 id="kTitle"></h2>
+  <div class="small" id="kTimes"></div>
+  <div class="sub" id="kHint" style="margin:6px 0 0"></div>
+  <div class="cards" id="kCards"></div>
+  <button class="primary" id="btnPick" style="display:none"></button>
+</div></div>
+
+<!-- 執行懲罰 -->
+<div class="screen" id="penalty"><div class="card">
+  <div class="sub" id="nWho" style="font-size:15px"></div>
+  <div class="cards" id="nCards"></div>
+  <div id="nTimer"></div>
+  <div class="row"><button id="btnPass">🛡️ 免死金牌</button><button id="btnRedo">🙅 不算！再罰一張</button></div>
+  <div class="vs"><div class="pl host"><div class="n" id="nHostN"></div><div class="c" id="nHostC"></div></div>
+    <div>VS</div><div class="pl guest"><div class="n" id="nGuestN"></div><div class="c" id="nGuestC"></div></div></div>
+  <button class="primary" id="btnDone"></button>
+  <div class="small" id="nWait"></div>
+  <button id="btnRaise">😈 加碼！下一回合懲罰 ×2</button>
+  <div class="small" id="nRaise"></div>
+  <button class="ghost" id="btnEndMatch">喊停，結束這場</button>
+</div></div>
+
+<!-- 加碼確認 -->
+<div id="raiseModal"><div class="card">
+  <div class="big">😈</div>
+  <h2 id="mTitle"></h2>
+  <p class="sub">接受的話，下一回合輸的人要挑兩張懲罰卡。<br>認慫＝直接算你輸一回合，馬上受罰。</p>
+  <button class="primary" id="btnAccept">接受，誰怕誰 😤</button>
+  <button id="btnDecline">認慫 🙈</button>
+</div></div>
+
+<!-- 整場結束 -->
+<div class="screen" id="over"><div class="card">
+  <div class="big">🏆</div>
+  <h2 id="oTitle"></h2>
+  <div class="sub" id="oWho"></div>
+  <div class="cards" id="oCards"></div>
+  <div id="oBet"></div>
+  <div class="small" id="oInfo"></div>
+  <button class="primary" id="btnRematch">再來一場</button>
+  <button class="ghost" id="btnOverHome">回首頁</button>
+</div></div>
+
+<!-- 練習結果 -->
+<div class="screen" id="pDone"><div class="card">
+  <h2 id="pTitle">單人練習</h2>
+  <div class="small" id="pInfo"></div>
+  <label>選小遊戲</label><div class="seg" id="pGameSeg"></div>
+  <div class="small" id="pRule" style="margin-top:6px"></div>
+  <label>難度（正式對決第幾回合就是幾級）</label>
+  <div class="stepper"><button id="pPrev">−</button><b id="pLv"></b><button id="pNext">＋</button></div>
+  <button class="primary" id="pRetry">開始練習</button>
+  <button class="ghost" id="pHome">回首頁</button>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+// ================= 常數 =================
+const VH = 270, GY = 210, PW = 18, PH = 26, PH_SLIDE = 12;
+const G = .55, JUMP = 9.5, DJUMP = 8.5;
+const speedFor = r => Math.min(6.4, 3.8 + (r - 1) * .32);
+const lerp = (a, b, t) => a + (b - a) * t;
+const $ = id => document.getElementById(id);
+const AVATARS = { bunny: '🐰', cat: '🐱', bear: '🐻', dog: '🐶' };
+const SPICES = { sweet: '🍬 甜蜜', flirty: '💋 曖昧', hot: '🔥 火辣', xxx: '🌶️ 限制級' };
+const THEMES = { sultry: '🍷 慾火', cute: '🌸 可愛', neon: '🌙 霓虹' };
+
+// ================= 懲罰卡 =================
+// strip：這張卡要脫幾件（脫光就整場輸）
+const C = (ty, tx, strip = 0) => ({ ty, tx, strip });
+const CARDS = {
+  sweet: [
+    C('撒嬌', '用最嗲的聲音說「我最喜歡你了」三次'), C('撒嬌', '對著鏡頭比心＋眨眼，不能笑場'),
+    C('撒嬌', '用寶寶語氣跟對方說晚安'), C('撒嬌', '學貓咪撒嬌叫 10 秒'),
+    C('真心話', '第一次見面時，對我的第一印象是什麼？'), C('真心話', '什麼時候最想我？'),
+    C('真心話', '最想跟我一起去哪裡旅行？'), C('真心話', '我做過最讓你感動的一件事？'),
+    C('大冒險', '清唱一段情歌給對方聽'), C('大冒險', '模仿對方生氣的樣子'),
+    C('任務', '說出對方的 3 個優點，不能重複'), C('任務', '幫對方取一個專屬暱稱，今晚只能這樣叫'),
+    C('任務', '下次見面請對方喝一杯指定的飲料'), C('任務', '傳一張你現在的自拍，不能修圖'),
+  ],
+  flirty: [
+    C('脫衣', '脫一件，自己選', 1), C('脫衣', '脫一件，贏家指定哪件', 1), C('脫衣', '脫一件，要配音樂慢慢脫', 1),
+    C('真心話', '最喜歡我身上的哪個地方？'), C('真心話', '第一次想親我是什麼時候？'), C('真心話', '有夢過我嗎？夢到什麼？'),
+    C('撒嬌', '對著鏡頭送一個有聲音的飛吻'), C('撒嬌', '用最撩的語氣說「你今天好好看」'),
+    C('大冒險', '咬著嘴唇看鏡頭 5 秒，不准笑'), C('大冒險', '把手機拿近，對著麥克風講一句悄悄話'),
+    C('任務', '擺一個贏家指定的姿勢，維持 15 秒'), C('任務', '下次見面要給對方一個 10 秒的吻'),
+    C('任務', '下一回合比賽時，嘴裡要一直說「我愛你」'),
+  ],
+  hot: [
+    C('脫衣', '脫一件，贏家指定哪件', 1), C('脫衣', '慢慢脫一件，全程看著鏡頭', 1), C('脫衣', '一口氣脫兩件！', 2),
+    C('脫衣', '脫一件，脫之前要先跳 10 秒的舞', 1),
+    C('真心話', '最想跟我做、但還沒做過的事？'), C('真心話', '我做什麼最讓你心動到把持不住？'),
+    C('真心話', '最喜歡我穿什麼？'), C('撒嬌', '用最性感的聲音唸出贏家打的一句話'),
+    C('大冒險', '鏡頭只拍你的肩膀和鎖骨 10 秒'), C('大冒險', '把頭髮撥到一邊，對鏡頭說「換你了」'),
+    C('任務', '維持一個撩人的姿勢，直到贏家說停'), C('任務', '下次見面，贏家可以許一個願望，不能拒絕'),
+  ],
+  xxx: [
+    C('脫衣', '脫一件，贏家指定哪件', 1), C('脫衣', '慢慢脫一件，邊脫邊看著鏡頭問「喜歡嗎？」', 1),
+    C('脫衣', '一口氣脫兩件！', 2), C('脫衣', '脫一件，然後維持贏家指定的姿勢 30 秒', 1),
+    C('脫衣', '背對鏡頭慢慢脫一件，脫完再慢慢轉回來', 1), C('脫衣', '閉上眼睛，聽贏家的口令一步一步脫一件', 1),
+    C('大冒險', '對著鏡頭跳 30 秒性感的舞，贏家選歌'), C('大冒險', '用手指從脖子慢慢滑到鎖骨，全程盯著鏡頭'),
+    C('大冒險', '把燈調暗只留一盞，接下來整場都這樣玩'), C('大冒險', '咬著嘴唇、用最勾人的眼神盯著鏡頭 10 秒，對方先笑你就過關'),
+    C('任務', '用最性感的聲音，說出你現在最想對我做的三件事'), C('任務', '贏家指定一個部位，鏡頭特寫 10 秒'),
+    C('任務', '下一回合比賽時，鏡頭要拍到你全身'), C('任務', '貼近麥克風，用氣音說一句贏家指定的話'),
+    C('真心話', '你身上最敏感的地方是哪裡？'), C('真心話', '最想在哪個地方跟我親熱？'),
+    C('真心話', '想我的時候，腦中最常出現什麼畫面？要講具體'), C('真心話', '下次見面，看到我的第一件事想做什麼？'),
+    C('真心話', '我對你做過的事，哪一件讓你最受不了？'), C('撒嬌', '用最撩的語氣，叫三次只有我們知道的那個稱呼'),
+  ],
+};
+const FINALS = {
+  sweet: [C('終極', '下次見面，聽贏家指揮一整天'), C('終極', '親手做一份禮物送給贏家'), C('終極', '一週內每天早上傳早安給贏家'), C('終極', '下次約會行程全部由贏家決定')],
+  flirty: [C('終極', '下次見面，聽贏家指揮一整天'), C('終極', '今晚贏家說了算，乖乖配合一件事'), C('終極', '下次見面一進門先親 30 秒'), C('終極', '贏家指定你下次約會要穿什麼')],
+  hot: [C('終極', '今晚贏家說了算，什麼都要配合'), C('終極', '下次見面，贏家可以許三個願望'), C('終極', '贏家指定你下次見面要穿什麼（或不穿什麼）'), C('終極', '視訊時乖乖照贏家的指令做 3 分鐘')],
+  xxx: [C('終極', '今晚剩下的時間，贏家說什麼就做什麼'), C('終極', '下次見面，整晚由贏家主導，不准說不'), C('終極', '視訊時乖乖照贏家的指令做 5 分鐘，全程看著鏡頭'), C('終極', '贏家許三個願望，下次見面一個一個兌現')],
+};
+function drawCards(spice, loserClothes, n, final) {
+  if (final) return shuffle([...FINALS[spice]]).slice(0, 3);
+  let pool = spice === 'sweet' ? CARDS.sweet : spice === 'flirty' ? [...CARDS.flirty, ...CARDS.sweet.slice(0, 6)]
+    : spice === 'hot' ? [...CARDS.hot, ...CARDS.flirty.filter(c => !c.strip)] : [...CARDS.xxx, ...CARDS.hot.filter(c => !c.strip)];
+  pool = pool.filter(c => c.strip <= loserClothes);
+  const strips = shuffle(pool.filter(c => c.strip)), others = shuffle(pool.filter(c => !c.strip));
+  const out = [];
+  if (strips.length && (spice === 'hot' || spice === 'xxx' || Math.random() < .6)) out.push(strips.shift());
+  if (strips.length && spice === 'xxx' && n >= 3 && Math.random() < .5) out.push(strips.shift());   // 限制級常常兩張都是脫衣
+  const rest = shuffle([...strips, ...others]);
+  while (out.length < n && rest.length) out.push(rest.shift());
+  return shuffle(out);
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function cardHTML(c, i, sel, extra = '') {
+  const ty = c.by ? '自訂' : c.ty;
+  return `<div class="pcard ty-${ty}${sel ? ' sel' : ''} ${extra}" data-i="${i}"><div class="ty">${c.by ? '🤫 ' + c.ty : c.ty}${c.strip ? ' 👕−' + c.strip : ''}</div><div class="tx">${esc(c.tx)}</div>${c.by ? `<div class="by">✍️ ${esc(c.by)} 偷偷寫的</div>` : ''}</div>`;
+}
+const PENALTY_SECS = 60;
+// 同一組卡只在第一次出現時播翻牌動畫，之後重繪（每 2 秒同步）不再重播
+function setCards(el, key, html) { el.classList.toggle('noanim', el.dataset.k === key); el.dataset.k = key; el.innerHTML = html; }
+
+// ================= 存檔 =================
+const SAVE_KEY = 'heartbeat-duel-v1';
+let save = { name: '', clothes: 5, avatar: 'bunny', theme: 'sultry', spice: 'flirty', target: 5, matchW: 0, matchL: 0, roundW: 0, roundL: 0, bestRound: 0, practice: 1, myCards: [], bet: '', practiceGame: 'runner', gameMode: 'mix', sound: 'all' };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+
+// ================= 賽道生成（同一顆 seed 兩邊長得一模一樣）=================
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function genCourse(seed, round, withItems) {
+  const R = mulberry32(seed), rnd = (a, b) => a + R() * (b - a);
+  const s = speedFor(round), diff = Math.min(1, (round - 1) / 7), D1 = 34 * s;
+  const len = Math.min(7500, 2600 + round * 450);
+  const solids = [], hazards = [], cps = [], items = [];
+  let x = 0, gStart = -800, nextCp = len / 4;
+  const endG = () => { if (x > gStart) solids.push({ x: gStart, y: GY, w: x - gStart, h: 120 }); };
+  const pit = w => { endG(); x += w; gStart = x; };
+  const gap = () => {
+    const g = s * rnd(lerp(40, 17, diff), lerp(60, 30, diff));
+    if (withItems && R() < .22) items.push({ x: x + g * .5, y: GY - 48, got: false });
+    x += g;
+  };
+  const spikes = (w, y = GY) => { w = Math.max(12, Math.round(w / 12) * 12); hazards.push({ t: 'spike', x, y: y - 11, w, h: 11 }); x += w; };
+  const bar = w => { hazards.push({ t: 'bar', x, y: -400, w, h: GY - 19 + 400 }); x += w; };
+  const types = [['pit', 3], ['spike', 3], ['bar', 2 + diff * 2], ['step', 1.5], ['stones', diff > .3 ? 2 * diff : 0], ['combo', diff > .2 ? 3 * diff : 0], ['pitspike', diff > .4 ? 2 * diff : 0]];
+  const total = types.reduce((a, t) => a + t[1], 0);
+  x = 420;
+  while (x < len) {
+    if (x >= nextCp) { x += 20; cps.push(x); x += 70; nextCp += len / 4; }
+    let r = R() * total, type = types[0][0];
+    for (const [t, w] of types) { if ((r -= w) <= 0) { type = t; break; } }
+    switch (type) {
+      case 'pit':
+        pit(diff > .25 && R() < .25 + .3 * diff ? D1 * rnd(1.02, 1.12 + .05 * diff) : D1 * rnd(.4, .55 + .2 * diff)); break;
+      case 'spike': spikes(rnd(14, Math.min(D1 * .5, 26 + 50 * diff))); break;
+      case 'bar': bar(rnd(40, 70 + 160 * diff)); break;
+      case 'step': {
+        const h = rnd(24, 34 + 28 * diff), w = rnd(100, 230);
+        solids.push({ x, y: GY - h, w, h: h + 120 });
+        if (diff > .35 && R() < .5) { const sx = x; x += w * .4; spikes(24 + 12 * Math.floor(R() * 2), GY - h); x = sx; }
+        x += w; break;
+      }
+      case 'stones': {
+        const n = 2 + (R() < diff ? 1 : 0);
+        for (let i = 0; i < n; i++) { pit(D1 * rnd(.35, .5)); x += rnd(lerp(60, 34, diff), lerp(80, 50, diff)); }
+        pit(D1 * rnd(.35, .5)); break;
+      }
+      case 'combo':
+        spikes(rnd(14, 36)); x += s * rnd(lerp(26, 15, diff), lerp(34, 22, diff)); bar(rnd(50, 90 + 80 * diff)); break;
+      case 'pitspike':
+        pit(D1 * rnd(.4, .55)); x += s * rnd(lerp(26, 16, diff), 30); spikes(rnd(14, 36)); break;
+    }
+    gap();
+  }
+  x += 200; const finish = x; x += 1200; endG();
+  return { solids, hazards, cps, items, finish, speed: s, round };
+}
+
+// ================= 跑者物理 =================
+function newRunner() { return { x: 0, y: GY, vy: 0, onGround: true, buf: 0, coy: 0, dj: true, sliding: false, dead: 0, cp: 0, deaths: 0, prevJump: false, squash: 0 }; }
+const pH = p => p.sliding ? PH_SLIDE : PH;
+const hit = (ax, ay, aw, ah, b) => ax < b.x + b.w && ax + aw > b.x && ay < b.y + b.h && ay + ah > b.y;
+
+function stepRunner(p, c, inp) {
+  if (p.dead > 0) {
+    if (--p.dead === 0) { p.x = p.cp; p.y = GY; p.vy = 0; p.onGround = true; p.dj = true; p.sliding = false; }
+    return;
+  }
+  p.x += c.speed;
+  for (const s of c.solids) if (hit(p.x, p.y - pH(p), PW, pH(p), s) && p.y > s.y + 6) return die(p, c);
+
+  const pressed = inp.jump && !p.prevJump; p.prevJump = inp.jump;
+  p.buf = pressed ? 6 : Math.max(0, p.buf - 1);
+  if (p.onGround) { p.coy = 6; p.dj = true; } else p.coy = Math.max(0, p.coy - 1);
+  if (p.buf) {
+    if (p.coy) { p.vy = -JUMP; p.buf = 0; p.coy = 0; p.onGround = false; sfx('jump'); }
+    else if (p.dj) { p.vy = -DJUMP; p.buf = 0; p.dj = false; sfx('jump2'); puff(p.x + 9, p.y); }
+  }
+  if (!inp.jump && p.vy < -3) p.vy = -3;
+  p.vy += G + (inp.slide && !p.onGround ? .9 : 0);
+  p.vy = Math.min(p.vy, 13);
+  const prevY = p.y;
+  p.y += p.vy; p.onGround = false;
+  if (p.vy >= 0) for (const s of c.solids)
+    if (p.x + PW > s.x && p.x < s.x + s.w && prevY <= s.y + .01 && p.y >= s.y) {
+      if (p.vy > 6) p.squash = .4;
+      p.y = s.y; p.vy = 0; p.onGround = true; break;
+    }
+  p.sliding = inp.slide && p.onGround;
+  for (const h of c.hazards) if (hit(p.x + 2, p.y - pH(p) + 2, PW - 4, pH(p) - 3, h)) return die(p, c);
+  if (p.y > GY + 140) return die(p, c);
+  for (const cp of c.cps) if (p.x > cp && cp > p.cp) p.cp = cp;
+  p.squash *= .85;
+}
+function die(p) {
+  p.dead = 45; p.deaths++; sfx('die'); shake = 10;
+  if (theme() === 'cute') { for (let i = 0; i < 10; i++) particles.push({ x: p.x + 9, y: Math.min(p.y - 18, GY - 10), vx: (Math.random() - .5) * 3, vy: -1 - Math.random() * 2, life: 40, color: '#7cc4ff', r: 2.5 }); }
+  else burst(p.x + 9, Math.min(p.y - 10, GY), meColor(), 18);
+}
+
+// ================= 音效 =================
+let actx = null;
+
+// ================= 背景音樂（WebAudio 即時合成，不用音檔）=================
+// 依畫面切換：menu 慵懶 R&B、game 輕快、decider 加速、penalty 慢板心跳、tension 只剩低音和心跳
+// 可愛風用大調，慾火／霓虹用小調七和弦
+const PROG = {
+  minor: [[57, 60, 64, 67, 71], [53, 57, 60, 64], [50, 53, 57, 60, 64], [52, 56, 59, 62, 65]],
+  major: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]],
+};
+const MODES = {
+  menu:    { bpm: 76,  cut: 1300, pad: 1, ep: '....x.....x...x.', bass: 'x......x..x.....', kick: 'x......x..x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.x.' },
+  penalty: { bpm: 64,  cut: 850,  pad: 1, ep: '........x.......', bass: 'x.......x.......', kick: 'x..x............', snare: '', hat: '' },
+  tension: { bpm: 60,  cut: 600,  pad: 1, ep: '', bass: 'x...............', kick: 'x..x............', snare: '', hat: '' },
+  game:    { bpm: 118, cut: 2200, pad: 1, ep: '..x...x...x...x.', bass: 'x.x.x.x.x.x.x.x.', kick: 'x...x...x...x...', snare: '....x.......x...', hat: 'xxxxxxxxxxxxxxxx' },
+  decider: { bpm: 134, cut: 3400, pad: 1, ep: '..x...x...x...x.', bass: 'xxx.x.xxx.x.x.xx', kick: 'x...x...x...x.x.', snare: '....x.......x..x', hat: 'xxxxxxxxxxxxxxxx' },
+};
+const midiHz = n => 440 * Math.pow(2, (n - 69) / 12);
+const Music = {
+  out: null, noise: null, timer: null, mode: null, bpm: 76, step: 0, nextT: 0,
+  ensure() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      if (!this.out) {
+        this.out = actx.createGain(); this.out.gain.value = save.sound === 'all' ? .22 : 0;
+        const comp = actx.createDynamicsCompressor(); this.out.connect(comp).connect(actx.destination);
+        const len = actx.sampleRate, b = actx.createBuffer(1, len, actx.sampleRate), d = b.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        this.noise = b;
+        this.timer = setInterval(() => this.tick(), 25);
+      }
+    } catch (e) {}
+  },
+  volume() { if (this.out) this.out.gain.setTargetAtTime(save.sound === 'all' ? .22 : 0, actx.currentTime, .1); },
+  set(mode, opt = {}) {
+    if (!this.out || (mode === this.mode && !opt.force)) return;
+    this.mode = mode; this.bpm = opt.bpm || MODES[mode].bpm; this.step = 0;
+    this.nextT = opt.startAt || actx.currentTime + .08;
+  },
+  tick() {
+    if (!this.mode || save.sound !== 'all') return;
+    const spb = 60 / this.bpm / 4;
+    while (this.nextT < actx.currentTime + .15) { this.playStep(this.step, this.nextT, spb); this.nextT += spb; this.step++; }
+  },
+  playStep(s, t, spb) {
+    const m = MODES[this.mode === 'rhythm' ? 'game' : this.mode], i = s % 16, bar = Math.floor(s / 16);
+    const ch = PROG[theme() === 'cute' ? 'major' : 'minor'][bar % 4], hit = p => p && p[i] === 'x';
+    if (i === 0 && m.pad) this.pad(ch, t, spb * 16, m.cut);
+    if (hit(m.ep)) this.ep(ch, t);
+    if (hit(m.bass)) this.bass(ch[0] - 24, t, spb * 3);
+    if (hit(m.kick)) this.kick(t);
+    if (hit(m.snare)) this.snare(t);
+    if (hit(m.hat)) this.hat(t, i % 4 === 2 ? .05 : .025);
+  },
+  env(t, peak, a, d) { const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); g.connect(this.out); return g; },
+  pad(ch, t, dur, cut) {
+    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cut; f.Q.value = .7;
+    f.connect(this.env(t, .05, .6, dur));
+    for (const n of ch) for (const det of [-7, 7]) { const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midiHz(n); o.detune.value = det; o.connect(f); o.start(t); o.stop(t + dur + 1); }
+  },
+  ep(ch, t) {
+    const g = this.env(t, .07, .01, .7);
+    for (const n of ch.slice(1)) { const o = actx.createOscillator(); o.type = 'triangle'; o.frequency.value = midiHz(n + 12); o.connect(g); o.start(t); o.stop(t + .8); }
+  },
+  bass(n, t, len) {
+    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420; f.connect(this.env(t, .32, .01, len + .15));
+    for (const ty of ['sine', 'triangle']) { const o = actx.createOscillator(); o.type = ty; o.frequency.value = midiHz(n); o.connect(f); o.start(t); o.stop(t + len + .3); }
+  },
+  kick(t) {
+    const o = actx.createOscillator(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + .14);
+    o.connect(this.env(t, .7, .003, .28)); o.start(t); o.stop(t + .35);
+  },
+  noiseHit(t, type, freq, peak, d) {
+    const n = actx.createBufferSource(); n.buffer = this.noise;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+    n.connect(f).connect(this.env(t, peak, .002, d)); n.start(t, Math.random() * .5); n.stop(t + d + .05);
+  },
+  snare(t) { this.noiseHit(t, 'bandpass', 1800, .22, .16); },
+  hat(t, v) { this.noiseHit(t, 'highpass', 7500, v, .04); },
+};
+function updateMusic() {
+  if (!Music.out) return;
+  const scr = (document.querySelector('.screen.show') || {}).id;
+  if (race && !scr) {
+    if (race.finished) return Music.set('menu');
+    if (race.game === 'quick' || (race.game === 'rhythm' && race.countdown > 0)) return Music.set('tension');
+    if (race.game === 'rhythm') return;   // 節拍遊戲開始時另外對齊拍子
+    return Music.set(race.decider ? 'decider' : 'game');
+  }
+  Music.set(['pick', 'penalty', 'over'].includes(scr) ? 'penalty' : 'menu');
+}
+// 瀏覽器規定要使用者先點一下才能出聲
+addEventListener('pointerdown', () => { if (!Music.out) { Music.ensure(); updateMusic(); } }, { capture: true });
+addEventListener('keydown', () => { if (!Music.out) { Music.ensure(); updateMusic(); } }, { capture: true });
+const SOUND_LABEL = { all: '🔊', sfx: '🎵✕', none: '🔇' };
+function renderSoundBtn() { const b = document.getElementById('btnSound'); if (b) { b.textContent = SOUND_LABEL[save.sound]; b.title = { all: '音樂＋音效', sfx: '只有音效', none: '全部靜音' }[save.sound]; } }
+function sfx(type) {
+  if (save.sound === 'none') return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const N = { jump: [[500, 760, .07, 'square']], jump2: [[700, 1100, .07, 'square']], die: [[280, 60, .3, 'sawtooth']],
+      cp: [[660, 990, .1, 'triangle']], go: [[880, 880, .25, 'triangle']], beep: [[440, 440, .12, 'triangle']],
+      item: [[900, 1400, .12, 'triangle']], tick: [[1500, 1500, .025, 'square']], perfect: [[1046, 1568, .09, 'triangle']], coin: [[988, 1318, .07, 'triangle']], hit: [[200, 120, .25, 'square']], beat: [[70, 50, .12, 'sine'], [70, 50, .14, 'sine']],
+      win: [[523, 523, .1, 'triangle'], [659, 659, .1, 'triangle'], [784, 784, .1, 'triangle'], [1046, 1046, .3, 'triangle']],
+      lose: [[400, 380, .15, 'triangle'], [300, 280, .15, 'triangle'], [200, 150, .35, 'triangle']] }[type];
+    let t = actx.currentTime;
+    for (const [f0, f1, d, w] of N) {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = w; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + d);
+      g.gain.setValueAtTime(type === 'beat' ? .25 : .07, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + .02); t += d * (type === 'beat' ? 1.6 : .9);
+    }
+  } catch (e) {}
+}
+
+// ================= 輸入（觸控：左半滑行、右半跳；鍵盤：空白/↑ 跳、↓ 滑、E 丟道具）=================
+const touches = new Map(), keys = new Set();
+const cv = $('cv');
+// 小遊戲用：taps＝這一格之間的點擊（含左右邊、精準時間），dragX＝手指目前的水平位置（0~1）
+let taps = [], dragX = null;
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const side = e.clientX < innerWidth / 2 ? 'left' : 'right';
+  touches.set(e.pointerId, side === 'left' ? 'slide' : 'jump');
+  taps.push({ side, t: performance.now() }); dragX = e.clientX / innerWidth;
+  if (actx && actx.state === 'suspended') actx.resume();
+});
+cv.addEventListener('pointermove', e => { if (touches.has(e.pointerId)) dragX = e.clientX / innerWidth; });
+const up = e => { touches.delete(e.pointerId); if (!touches.size) dragX = null; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', up);
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  keys.add(e.code);
+  if (e.code === 'KeyE') useItem();
+  if (!e.repeat) {
+    if (['Space', 'ArrowUp', 'KeyW', 'ArrowRight', 'KeyJ'].includes(e.code)) taps.push({ side: 'right', t: performance.now() });
+    else if (['ArrowLeft', 'KeyF'].includes(e.code)) taps.push({ side: 'left', t: performance.now() });
+  }
+});
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('blur', () => { keys.clear(); touches.clear(); dragX = null; });
+function readInput() {
+  const t = [...touches.values()];
+  return { jump: (t.includes('jump') || keys.has('Space') || keys.has('ArrowUp') || keys.has('KeyW')) && !(fx.sticky > 0),
+    slide: t.includes('slide') || keys.has('ArrowDown') || keys.has('KeyS'),
+    left: keys.has('ArrowLeft') || keys.has('KeyA'), right: keys.has('ArrowRight') || keys.has('KeyD'), dragX };
+}
+function takeTaps() { const t = taps; taps = []; return t; }
+
+// ================= 連線（公開 MQTT 中繼，兩個 broker 同時送，重複自動略過）=================
+const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt'];
+const myId = Math.random().toString(36).slice(2, 10);
+let net = null, onMsg = () => {};
+function connectRoom(code) {
+  disconnect();
+  const topic = 'heartbeat-duel/v1/' + code;
+  net = { clients: [], topic, seq: 0, seen: new Set(), lastHeard: Date.now() };
+  for (const url of BROKERS) {
+    try {
+      const c = mqtt.connect(url, { clientId: 'hd_' + myId + '_' + Math.random().toString(36).slice(2, 6), clean: true, connectTimeout: 8000, reconnectPeriod: 2500 });
+      c.on('connect', () => c.subscribe(topic, { qos: 0 }));
+      c.on('message', (t, buf) => {
+        let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; }
+        if (!net || m.from === myId) return;
+        if (m.type !== 'pos') { if (net.seen.has(m.k)) return; net.seen.add(m.k); if (net.seen.size > 500) net.seen = new Set([...net.seen].slice(-200)); }
+        net.lastHeard = Date.now();
+        onMsg(m);
+      });
+      net.clients.push(c);
+    } catch (e) {}
+  }
+}
+function send(m) {
+  if (!net) return;
+  m.from = myId; m.k = myId + ':' + (++net.seq);
+  const s = JSON.stringify(m);
+  for (const c of net.clients) if (c.connected) c.publish(net.topic, s, { qos: 0 });
+}
+function disconnect() { if (net) for (const c of net.clients) try { c.end(true); } catch (e) {} net = null; }
+
+// ================= 對戰狀態 =================
+// role: 'host' | 'guest' | 'solo'；房主是裁判：判勝負、抽卡、扣衣服、廣播 st
+let role = null, roomCode = '', st = null, guestId = null;
+let course = null, me = null, opp = null, race = null;
+let shake = 0, particles = [], timers = [], heldItem = null, pickSel = [], pickSelId = -1;
+const fx = { hearts: 0, sticky: 0 };
+const theme = () => st ? st.theme : save.theme;
+const myKey = () => role === 'guest' ? 'guest' : 'host';
+const oppKey = () => role === 'guest' ? 'host' : 'guest';
+const roleColor = k => ({ cute: ['#ff7ab5', '#6cbcff'], sultry: ['#ff3d6e', '#b98cff'], neon: ['#ff4f9a', '#45b4ff'] }[theme()] || ['#ff4f9a', '#45b4ff'])[k === 'host' ? 0 : 1];
+const meColor = () => roleColor(myKey()), oppColor = () => roleColor(oppKey());
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id));
+  $('hud').style.display = id ? 'none' : 'block';
+  if (id !== 'penalty') $('raiseModal').classList.remove('show');
+  updateMusic();
+}
+function applyTheme() { document.body.className = theme(); document.querySelector('meta[name=theme-color]').content = theme() === 'cute' ? '#fff0f7' : theme() === 'sultry' ? '#12030a' : '#1c0b22'; }
+function toast(msg, ms = 2500) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms); }
+function every(fn, ms) { const h = setInterval(fn, ms); timers.push(h); return h; }
+function clearTimers() { timers.forEach(clearInterval); timers = []; }
+function genCode() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; }
+const meP = () => ({ name: save.name, clothes: save.clothes, start: save.clothes, wins: 0, avatar: save.avatar, pass: 1 });
+// 雙方的秘密（自訂卡、賭注）只存在房主這邊，不放進廣播的 st，結束才揭曉
+let secrets = { host: { cards: [], bet: '' }, guest: { cards: [], bet: '' } };
+function setSecret(who, cards, bet) {
+  secrets[who] = { cards: (cards || []).slice(0, 6), bet: bet || '' };
+  st.cc[who] = secrets[who].cards.length; st.betSet[who] = !!secrets[who].bet;
+}
+function hostDraw(loser, n, final) {
+  const clothes = st.p[loser].clothes;
+  if (final) return drawCards(st.spice, clothes, 3, true);
+  const cards = drawCards(st.spice, clothes, n, false);
+  const custom = [];
+  for (const k of ['host', 'guest']) secrets[k].cards.forEach((c, i) => {
+    const id = k[0] + i + ':' + c.tx;
+    if (c.strip <= clothes && !st.usedCustom.includes(id)) custom.push({ ...c, by: st.p[k].name, id });
+  });
+  if (custom.length && Math.random() < .6) cards[Math.floor(Math.random() * cards.length)] = custom[Math.floor(Math.random() * custom.length)];
+  return cards;
+}
+
+function hostCreate() {
+  role = 'host'; roomCode = genCode(); guestId = null;
+  st = { phase: 'lobby', round: 0, raceId: 0, seed: 0, theme: save.theme, spice: save.spice, target: save.target,
+    p: { host: meP(), guest: null }, pickId: 0, cards: null, chosen: null, winner: null, loser: null, lastRace: null,
+    stake: 1, raise: null, ready: {}, final: false, decider: false, game: null, gameMode: save.gameMode, tie: false,
+    cc: { host: 0, guest: 0 }, betSet: { host: false, guest: false }, usedCustom: [], need: 1, redone: false, passed: false, passDebt: null, bets: null };
+  secrets = { host: { cards: [], bet: '' }, guest: { cards: [], bet: '' } };
+  setSecret('host', save.myCards, save.bet);
+  connectRoom(roomCode); onMsg = hostOnMsg;
+  every(() => { send({ type: 'state', st }); checkAlive(); }, 2000);
+  history.replaceState(null, '', location.pathname + '?room=' + roomCode);
+  applyTheme(); renderLobby(); show('lobby');
+}
+function hostBroadcast() { send({ type: 'state', st }); renderFromState(); }
+function hostOnMsg(m) {
+  if (m.type === 'join') {
+    if (guestId && guestId !== m.from && st.p.guest) return send({ type: 'full', to: m.from });
+    const fresh = guestId !== m.from;
+    guestId = m.from;
+    if (fresh || !st.p.guest) { st.p.guest = { name: m.name, clothes: m.clothes, start: m.clothes, wins: 0, avatar: m.avatar, pass: 1 }; setSecret('guest', m.cards, m.bet); }
+    send({ type: 'welcome', to: m.from }); hostBroadcast();
+    if (fresh) toast(m.name + ' 進來了 💗');
+  } else if (m.from !== guestId) return;
+  else if (m.type === 'pos') onOppPos(m);
+  else if (m.type === 'fin') onOppFin(m);
+  else if (m.type === 'atk') onAttack(m);
+  else if (m.type === 'act') hostAct('guest', m.a, m.d || {});
+  else if (m.type === 'secret') { setSecret('guest', m.cards, m.bet); hostBroadcast(); }
+  else if (m.type === 'quit') { toast('對方喊停了，休息一下 ❤', 4000); endMatchLocal(); }
+}
+
+// 玩家的動作：房主直接處理，客人送給房主
+function act(a, d = {}) { if (role === 'host') hostAct('host', a, d); else send({ type: 'act', a, d }); }
+function hostAct(who, a, d) {
+  if (a === 'pick' && st.phase === 'pick' && who === st.winner && d.pickId === st.pickId) {
+    st.chosen = d.idx.slice(0, st.need).map(i => st.cards[i]).filter(Boolean);
+    if (!st.chosen.length) return;
+    for (const c of st.chosen) if (c.id) st.usedCustom.push(c.id);
+    if (!st.final) {
+      const L = st.p[st.loser];
+      L.clothes = Math.max(0, L.clothes - st.chosen.reduce((s, c) => s + c.strip, 0));
+      st.stake = 1;
+    }
+    if (st.final) st.bets = { host: secrets.host.bet, guest: secrets.guest.bet };
+    st.phase = st.final ? 'over' : 'penalty'; st.ready = {};
+  } else if (a === 'redo' && st.phase === 'penalty' && who === st.winner && !st.redone && !st.passed) {
+    // 驗收不通過：同一個輸家再挑一張（每回合限一次）
+    newPick(1); st.redone = true;
+  } else if (a === 'pass' && st.phase === 'penalty' && who === st.loser && st.p[who].pass > 0 && !st.passed) {
+    // 免死金牌：這次免罰（脫掉的算回來），代價是下次輸要挑兩張
+    st.p[who].pass--; st.passed = true; st.passDebt = who;
+    st.p[who].clothes += st.chosen.reduce((s, c) => s + c.strip, 0);
+    st.ready = {};
+  } else if (a === 'done' && st.phase === 'penalty' && d.pickId === st.pickId) {
+    st.ready[who] = true;
+    if (st.ready.host && st.ready.guest) afterPenalty();
+  } else if (a === 'raise' && st.phase === 'penalty' && !st.raise && st.stake === 1) {
+    st.raise = { by: who, state: 'pending' };
+  } else if (a === 'raiseAns' && st.raise && st.raise.state === 'pending' && who !== st.raise.by) {
+    if (d.accept) { st.stake = 2; st.raise.state = 'accepted'; }
+    else { const w = st.raise.by; st.raise = null; setupPick(w, { forfeit: true }); }
+  } else if (a === 'rematch' && st.phase === 'over') {
+    st.round = 0; st.phase = 'lobby'; st.stake = 1; st.raise = null; st.final = false; st.lastRace = null;
+    st.usedCustom = []; st.passDebt = null; st.bets = null;
+    for (const k of ['host', 'guest']) { st.p[k].clothes = st.p[k].start; st.p[k].wins = 0; st.p[k].pass = 1; }
+  } else return;
+  hostBroadcast();
+}
+function setupPick(winner, lastRace) {
+  const loser = winner === 'host' ? 'guest' : 'host';
+  st.p[winner].wins++;
+  st.winner = winner; st.loser = loser; st.lastRace = lastRace;
+  st.final = st.p[winner].wins >= st.target;
+  const debt = st.passDebt === loser;
+  st.passDebt = null;
+  newPick(st.final ? 1 : (st.stake === 2 || debt ? 2 : 1));
+  st.debtPaid = debt && !st.final;
+}
+function newPick(need) {
+  st.need = need; st.pickId++; st.chosen = null; st.ready = {}; st.redone = false; st.passed = false; st.debtPaid = false;
+  st.cards = hostDraw(st.loser, need === 2 ? 4 : 3, st.final);
+  st.phase = 'pick';
+}
+function afterPenalty() {
+  const L = st.p[st.loser];
+  if (st.spice !== 'sweet' && L.clothes === 0) {   // 脫光＝整場輸，直接進終極懲罰
+    st.final = true; newPick(1);
+    st.lastRace = { stripped: true };
+  } else hostStartRound();
+}
+
+function guestJoin(code) {
+  role = 'guest'; roomCode = code.toUpperCase(); st = null;
+  connectRoom(roomCode); onMsg = guestOnMsg;
+  let welcomed = false;
+  const join = () => send({ type: 'join', name: save.name, clothes: save.clothes, avatar: save.avatar, cards: save.myCards, bet: save.bet });
+  every(() => { if (!welcomed) join(); }, 1000);
+  join();
+  every(checkAlive, 2000);
+  guestOnMsg.welcome = () => { welcomed = true; };
+  $('lobbyTitle').textContent = '連線中…'; $('codeBox').style.display = 'none'; $('hostSettings').style.display = 'none';
+  show('lobby');
+}
+function guestOnMsg(m) {
+  if (m.to && m.to !== myId) return;
+  if (m.type === 'welcome') guestOnMsg.welcome();
+  else if (m.type === 'full') { toast('這個房間已經有兩個人了'); endMatchLocal(); }
+  else if (m.type === 'state') {
+    guestOnMsg.welcome();
+    st = m.st; applyTheme();
+    if (st.phase === 'race') { if (!race || race.raceId !== st.raceId) startRace(); }
+    else renderFromState();
+  }
+  else if (m.type === 'pos') onOppPos(m);
+  else if (m.type === 'fin') onOppFin(m);
+  else if (m.type === 'atk') onAttack(m);
+  else if (m.type === 'quit') { toast('對方喊停了，休息一下 ❤', 4000); endMatchLocal(); }
+}
+function checkAlive() {
+  if (!net) return;
+  if ((role === 'guest' || st && st.p.guest) && Date.now() - net.lastHeard > 9000) toast('對方好像斷線了…等一下或重新整理', 1900);
+}
+
+// ---- 畫面渲染 ----
+function pInfo(p) { return `${AVATARS[p.avatar] || ''} ${st.spice !== 'sweet' ? '👕×' + p.clothes + '・' : ''}${p.wins} 勝`; }
+function fillVs(pre) {
+  $(pre + 'HostN').textContent = st.p.host.name; $(pre + 'GuestN').textContent = st.p.guest ? st.p.guest.name : '等待中';
+  $(pre + 'HostC').textContent = pInfo(st.p.host); $(pre + 'GuestC').textContent = st.p.guest ? pInfo(st.p.guest) : '';
+}
+function seg(el, opts, cur, onPick) {
+  el.innerHTML = '';
+  for (const [k, label] of Object.entries(opts)) {
+    const b = document.createElement('button'); b.textContent = label; b.className = k === cur ? 'on' : '';
+    b.onclick = () => onPick(k); el.appendChild(b);
+  }
+}
+function renderLobby() {
+  $('codeShow').textContent = roomCode;
+  const isHost = role === 'host', g = st && st.p.guest;
+  $('codeBox').style.display = isHost ? '' : 'none';
+  $('hostSettings').style.display = isHost ? '' : 'none';
+  $('lobbyTitle').textContent = isHost ? (g ? '對手到齊！' : '等待對方加入…') : '等房主按開始…';
+  if (st) {
+    fillVs('l');
+    $('guestSettings').textContent = `${st.gameMode === 'mix' ? '🎲 小遊戲輪替' : GAMES[st.gameMode].icon + ' ' + GAMES[st.gameMode].name}・${THEMES[st.theme]}・${SPICES[st.spice]}・搶 ${st.target} 勝`;
+    const sec = k => st.p[k] ? `${st.p[k].name}：賭注${st.betSet[k] ? ' ✓' : ' ✗'}・偷寫 ${st.cc[k]} 張` : '';
+    $('secretStatus').textContent = [sec('host'), sec('guest')].filter(Boolean).join('　｜　');
+    if (isHost) {
+      seg($('segGame'), GAME_MODES, st.gameMode, k => { st.gameMode = save.gameMode = k; persist(); hostBroadcast(); });
+      seg($('segTheme'), THEMES, st.theme, k => { st.theme = save.theme = k; persist(); applyTheme(); hostBroadcast(); });
+      seg($('segSpice'), SPICES, st.spice, k => {
+        if (k === 'xxx' && st.spice !== 'xxx' && !confirm('🌶️ 限制級：懲罰會很露骨，請確認兩個人都已滿 18 歲、都同意這樣玩。\n任何人隨時都可以按「喊停」結束。\n\n只用視訊即時玩，不要截圖或錄影喔。')) return;
+        st.spice = save.spice = k; persist(); hostBroadcast();
+      });
+      $('tVal').textContent = st.target + ' 勝';
+    }
+  }
+  $('btnStart').style.display = isHost ? '' : 'none';
+  $('btnStart').disabled = !g;
+}
+function renderFromState() {
+  if (!st) return;
+  applyTheme();
+  if (st.phase === 'lobby') { renderLobby(); if (!$('secret').classList.contains('show')) show('lobby'); }
+  else if (st.phase === 'pick') renderPick();
+  else if (st.phase === 'penalty') renderPenalty();
+  else if (st.phase === 'over') renderOver();
+}
+function raceLine() {
+  const r = st.lastRace;
+  if (!r) return '';
+  if (r.forfeit) return `${st.p[st.loser].name} 認慫了，直接算輸 🙈`;
+  if (r.stripped) return `${st.p[st.loser].name} 已經被脫光了！`;
+  const G = GAMES[r.game] || GAMES.runner;
+  return `第 ${st.round} 回合${st.decider ? '（決勝局）' : ''}・${G.icon}${G.name}：${st.p.host.name} ${r.t.host}｜${st.p.guest.name} ${r.t.guest}`;
+}
+function renderPick() {
+  const iWon = st.winner === myKey(), loser = st.p[st.loser], winner = st.p[st.winner];
+  if (pickSelId !== st.pickId) {
+    pickSelId = st.pickId; pickSel = [];
+    if (race && race.finTimer) clearInterval(race.finTimer);
+    sfx(iWon ? 'win' : 'lose');
+    if (st.lastRace && !st.lastRace.stripped && !st.redone) { iWon ? save.roundW++ : save.roundL++; save.bestRound = Math.max(save.bestRound, st.round); persist(); }
+  }
+  const need = st.need;
+  $('kEmoji').textContent = st.final ? '🏆' : (iWon ? '😏' : '🫣');
+  const sul = st.theme === 'sultry';
+  $('kTitle').textContent = st.final ? (iWon ? (sul ? '今晚，你說了算' : '你贏了整場！') : (sul ? `今晚，${winner.name} 說了算` : `${winner.name} 贏了整場…`))
+    : (iWon ? '你贏了！' : (sul ? '你輸了……乖乖等著' : '你輸了…'));
+  if (sul) $('kEmoji').textContent = st.final ? '👑' : (iWon ? '😏' : '🫦');
+  $('kTimes').textContent = st.redone ? '🙅 驗收不通過！再罰一張' : raceLine() + (st.debtPaid ? `・${loser.name} 之前用了免死金牌，這次要挑兩張` : '');
+  $('kHint').innerHTML = iWon ? (sul && !st.final ? `挑 <b>${need}</b> 張讓 ${esc(loser.name)} 臉紅的 🫦` : `挑 <b>${need}</b> 張${st.final ? '終極懲罰' : '懲罰'}給 ${esc(loser.name)} 😈`) : `${esc(winner.name)} 正在幫你挑${st.final ? '終極懲罰' : '懲罰'}…`;
+  setCards($('kCards'), 'k' + st.pickId, st.cards.map((c, i) => cardHTML(c, i, pickSel.includes(i))).join(''));
+  if (iWon) $('kCards').querySelectorAll('.pcard').forEach(el => el.onclick = () => {
+    const i = +el.dataset.i;
+    pickSel = pickSel.includes(i) ? pickSel.filter(x => x !== i) : [...pickSel, i].slice(-need);
+    renderPick();
+  });
+  $('btnPick').style.display = iWon ? '' : 'none';
+  $('btnPick').disabled = pickSel.length !== need;
+  $('btnPick').textContent = pickSel.length === need ? '就決定是你了 😈' : `再選 ${need - pickSel.length} 張`;
+  show('pick');
+}
+function renderPenalty() {
+  const iLost = st.loser === myKey(), loser = st.p[st.loser];
+  $('nWho').innerHTML = st.passed ? `🛡️ ${esc(loser.name)} 用了免死金牌！這次免罰，但下一回合輸的話要挑兩張`
+    : iLost ? (st.theme === 'sultry' ? '🫦 願賭服輸，慢慢來，看著鏡頭：' : '🫣 願賭服輸，你要執行：') : (st.theme === 'sultry' ? `🍷 倒杯酒，好好欣賞 ${esc(loser.name)}：` : `👀 盯著 ${esc(loser.name)} 執行：`);
+  setCards($('nCards'), 'n' + st.pickId + st.passed, st.chosen.map((c, i) => cardHTML(c, i, false, st.passed ? 'void' : '')).join(''));
+  fillVs('n');
+  if (penaltyClock.id !== st.pickId) penaltyClock = { id: st.pickId, start: Date.now() };
+  const mine = st.ready[myKey()], theirs = st.ready[oppKey()];
+  $('btnDone').disabled = !!mine;
+  $('btnDone').textContent = mine ? '已準備 ✓' : st.passed ? '下一回合 →' : (iLost ? '做完了，下一回合 →' : '驗收通過，下一回合 →');
+  $('btnPass').style.display = iLost && !st.passed && loser.pass > 0 && !mine ? '' : 'none';
+  $('btnPass').textContent = `🛡️ 免死金牌（剩 ${loser.pass}）`;
+  $('btnRedo').style.display = !iLost && !st.passed && !st.redone && !mine ? '' : 'none';
+  tickPenaltyClock();
+  $('nWait').textContent = mine && !theirs ? (iLost ? '等對方驗收…' : '等對方做完…') : (theirs && !mine ? '對方準備好了' : '');
+  const r = st.raise;
+  $('btnRaise').style.display = !r && st.stake === 1 ? '' : 'none';
+  $('nRaise').textContent = !r ? '' : r.state === 'accepted' ? '🔥 已加碼：下一回合輸的人要挑兩張懲罰' : (r.by === myKey() ? '等對方回應加碼…' : '');
+  const modal = r && r.state === 'pending' && r.by !== myKey();
+  $('raiseModal').classList.toggle('show', !!modal);
+  if (modal) $('mTitle').textContent = `${st.p[r.by].name} 要加碼！`;
+  show('penalty');
+  if (modal) $('raiseModal').classList.add('show');
+}
+let penaltyClock = { id: -1, start: 0 };
+function tickPenaltyClock() {
+  const el = $('nTimer');
+  if (!st || st.phase !== 'penalty' || st.passed || st.ready[st.loser]) { el.textContent = ''; el.className = ''; return; }
+  const left = Math.ceil(PENALTY_SECS - (Date.now() - penaltyClock.start) / 1000);
+  const iLost = st.loser === myKey();
+  if (left > 0) { el.textContent = `⏳ ${left} 秒內完成`; el.className = left <= 10 ? 'late' : ''; }
+  else { el.textContent = iLost ? '⏰ 超時了！對方可以要你再罰一張' : '⏰ 超時了！可以按「不算」再罰一張'; el.className = 'late'; }
+}
+setInterval(tickPenaltyClock, 250);
+
+function renderOver() {
+  const iWon = st.winner === myKey(), loser = st.p[st.loser], winner = st.p[st.winner];
+  if (renderOver.seen !== st.pickId) {
+    renderOver.seen = st.pickId; sfx(iWon ? 'win' : 'lose');
+    iWon ? save.matchW++ : save.matchL++; persist();
+  }
+  $('oTitle').textContent = `${winner.name} 完全勝利！`;
+  $('oWho').innerHTML = iWon ? `${esc(loser.name)} 要接受終極懲罰：` : '你要接受終極懲罰 🫣';
+  setCards($('oCards'), 'o' + st.pickId, st.chosen.map((c, i) => cardHTML(c, i)).join(''));
+  const lb = st.bets && st.bets[st.loser], wb = st.bets && st.bets[st.winner];
+  $('oBet').innerHTML = (lb ? `<div class="bet">📜 賭注揭曉！${esc(loser.name)} 當初寫：<br><b>「如果我輸了，我就${esc(lb)}」</b><br>願賭服輸 😏</div>` : '')
+    + (wb ? `<div class="small">（${esc(winner.name)} 寫的是「${esc(wb)}」，好險 😮‍💨）</div>` : '');
+  $('oInfo').textContent = `一共打了 ${st.round} 回合・${st.p.host.name} ${st.p.host.wins} 勝・${st.p.guest.name} ${st.p.guest.wins} 勝`;
+  $('btnRematch').textContent = role === 'host' ? '再來一場' : '等房主開新的一場';
+  $('btnRematch').disabled = role !== 'host';
+  show('over');
+}
+
+function hostStartRound(tie) {
+  if (!tie) {
+    st.round++;
+    st.game = st.gameMode !== 'mix' ? st.gameMode : shuffle(GAME_IDS.filter(g => g !== st.game))[0];
+  }
+  st.tie = !!tie; st.raceId++; st.seed = Math.floor(Math.random() * 1e9); st.phase = 'race'; st.ready = {};
+  if (st.raise && st.raise.state === 'pending') st.raise = null;
+  if (st.raise && st.raise.state === 'accepted') st.raise = null;   // 加碼效果已記在 stake
+  const h = st.p.host, g = st.p.guest, mp = st.target - 1;
+  st.decider = (h.wins === mp && g.wins === mp) || (st.spice !== 'sweet' && h.clothes === 1 && g.clothes === 1);
+  hostBroadcast(); startRace();
+}
+
+// ---- 比賽 ----
+// 成績一律換成「rank：越小越好」來比；認輸＝Infinity
+function startRace() {
+  const solo = role === 'solo';
+  const id = solo ? save.practiceGame : st.game;
+  const L = solo ? save.practice : st.round + (st.decider ? 2 : 0);
+  const seed = solo ? Math.floor(Math.random() * 1e9) : st.seed;
+  if (race && race.finTimer) clearInterval(race.finTimer);
+  heldItem = null; fx.hearts = 0; fx.sticky = 0; taps = [];
+  const deficit = solo ? 0 : st.p[oppKey()].wins - st.p[myKey()].wins;   // 落後補償
+  const bonus = deficit >= 3 ? 2 : deficit >= 2 ? 1 : 0;
+  course = null; me = null; gs = null;
+  if (id === 'runner') {
+    course = genCourse(seed, L, true); me = newRunner();
+    if (bonus) me.x = me.cp = bonus === 2 ? 140 : 80;
+    opp = solo ? null : { x: 0, y: GY, sl: false, dd: false, tx: 0, ty: GY };
+  } else { gs = GAMES[id].init(seed, L); opp = solo ? null : { sc: '' }; }
+  race = { raceId: solo ? 0 : st.raceId, game: id, L, frames: 0, countdown: 240, finished: false, myR: null, oppR: null, myDisp: '', oppDisp: '', deadline: null, decider: !solo && st.decider, bonus };
+  particles = []; applyTheme(); updateItemBtn(); show(null);
+  if (!solo && st.tie) toast('平手！同一個遊戲加賽一次 🔥', 2500);
+}
+function finishGame() {
+  const G = GAMES[race.game], v = G.value(gs), adj = race.bonus * G.handicap * (G.lowerBetter ? -1 : 1);
+  finishMe(G.lowerBetter ? v + adj : -(v + adj), G.disp(v) + (race.bonus ? '（含補償）' : ''));
+}
+function onOppPos(m) {
+  if (!opp || !race || m.raceId !== race.raceId) return;
+  if (m.sc != null) opp.sc = m.sc; else { opp.tx = m.x; opp.ty = m.y; opp.sl = m.sl; opp.dd = m.dd; }
+}
+function onOppFin(m) {
+  if (!race || m.raceId !== race.raceId || race.oppR != null) return;
+  race.oppR = m.r == null ? Infinity : m.r; race.oppDisp = m.disp;
+  if (opp && race.game !== 'runner') opp.sc = m.disp;
+  if (race.oppR === Infinity) {   // 對方認輸：我用現在的成績直接收工
+    if (!race.finished) { if (race.game === 'runner') finishMe(race.frames / 60, '對方認輸'); else finishGame(); }
+  } else if (!race.finished && GAMES[race.game].firstFinish) { race.deadline = race.oppR; toast('對方已經抵達終點了！', 1500); }
+  else if (!race.finished) toast(`對方完成了：${m.disp}`, 1500);
+  if (role === 'host') hostDecide();
+}
+function finishMe(r, disp) {
+  if (race.finished) return;
+  race.finished = true; setTimeout(updateMusic, 0); race.myR = r; race.myDisp = disp; updateItemBtn();
+  if (role === 'solo') { sfx('win'); return setTimeout(showPracticeDone, 700); }
+  const s = () => send({ type: 'fin', raceId: race.raceId, r: r === Infinity ? null : r, disp });
+  s(); race.finTimer = every(() => { if (st && st.phase !== 'race') return; s(); }, 1500);
+  if (role === 'host') hostDecide();
+}
+function hostDecide() {
+  if (!race || race.myR == null || race.oppR == null || st.phase !== 'race') return;
+  const h = race.myR, g = race.oppR;
+  if (h === g) { hostStartRound(true); return; }
+  setupPick(h < g ? 'host' : 'guest', { game: race.game, t: { host: race.myDisp, guest: race.oppDisp } });
+  hostBroadcast();
+}
+
+// ---- 道具 ----
+const ITEMS = { hearts: { icon: '💘', name: '愛心炸彈', msg: '💘 被愛心炸彈砸中，畫面被擋住了！' }, sticky: { icon: '🍯', name: '黏黏蜂蜜', msg: '🍯 被蜂蜜黏住，暫時不能跳！' } };
+function updateItemBtn() {
+  const b = $('btnItem');
+  b.style.display = heldItem && race && !race.finished && role !== 'solo' ? 'block' : 'none';
+  b.textContent = heldItem ? ITEMS[heldItem].icon : '';
+}
+function useItem() {
+  if (!heldItem || !race || race.finished || race.countdown > 0 || role === 'solo') return;
+  send({ type: 'atk', raceId: race.raceId, kind: heldItem });
+  toast(`丟出${ITEMS[heldItem].name}！😈`, 1000); sfx('item');
+  heldItem = null; updateItemBtn();
+}
+$('btnItem').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); useItem(); });
+function onAttack(m) {
+  if (!race || m.raceId !== race.raceId || race.finished) return;
+  if (m.kind === 'hearts') fx.hearts = 150; else fx.sticky = 90;
+  sfx('hit'); toast(ITEMS[m.kind].msg, 1500);
+}
+
+function endMatchLocal() { clearTimers(); disconnect(); race = null; course = null; role = null; st = null; history.replaceState(null, '', location.pathname); goHome(); }
+
+// ---- 練習 ----
+function startPractice() { role = 'solo'; st = null; $('pTitle').textContent = '單人練習'; $('pInfo').textContent = ''; showPracticeMenu(); }
+function showPracticeMenu() {
+  race = null; course = null; me = null; gs = null;
+  seg($('pGameSeg'), Object.fromEntries(GAME_IDS.map(id => [id, GAMES[id].icon])), save.practiceGame, k => { save.practiceGame = k; persist(); showPracticeMenu(); });
+  const G = GAMES[save.practiceGame];
+  $('pRule').innerHTML = `<b>${G.name}</b>：${G.rule}`;
+  $('pLv').textContent = '第 ' + save.practice + ' 級';
+  show('pDone');
+}
+function showPracticeDone() {
+  const G = GAMES[race.game];
+  $('pTitle').textContent = `${G.icon} ${G.name}・${race.myDisp}`;
+  $('pInfo').textContent = race.game === 'runner' ? `撞了 ${me.deaths} 次` : '';
+  showPracticeMenu();
+}
+
+// ================= 小遊戲 =================
+// 每個小遊戲：init(seed, 難度) 產生狀態；step 每格跑一次；value 是成績（lowerBetter 決定大小哪邊贏）
+// 同一顆 seed 兩邊題目一模一樣；handicap 是落後補償每級加的分
+const STACK_FW = 300, BH = 14, CATCH_FW = 360;
+const fieldX = w => viewW / 2 - w / 2;
+function stackSpawn(gs) {
+  const prev = gs.blocks[gs.blocks.length - 1], dir = gs.R() < .5 ? 1 : -1;
+  const speed = Math.min(7, (1.5 + .22 * gs.L) * (1 + gs.n * .035)) * (.9 + gs.R() * .2);
+  gs.cur = { x: dir > 0 ? -40 : STACK_FW - prev.w + 40, w: prev.w, dir, speed };
+}
+function quickNext(gs, res, msg) { gs.trials[gs.i].res = res; gs.total += res; gs.msg = msg; gs.i++; gs.phase = 'show'; gs.pt = 0; }
+const GAMES = {
+  runner: { name: '愛心跑酷', icon: '🏃', lowerBetter: true, firstFinish: true,
+    rule: '點右半邊跳（空中可二段跳）・按住左半邊滑行・先到終點贏' },
+  stack: { name: '疊疊愛心塔', icon: '🍰', lowerBetter: false, handicap: 1000,
+    rule: '點一下放下蛋糕，沒對齊會被切掉・疊越高越好（45 秒）',
+    init(seed, L) { const gs = { R: mulberry32(seed), L, blocks: [{ x: 90, w: 120 }], n: 0, t: 0, done: false, falling: [], cam: 0, flash: 0 }; stackSpawn(gs); return gs; },
+    step(gs, inp) {
+      if (++gs.t >= 45 * 60) { gs.done = true; return; }
+      const c = gs.cur;
+      c.x += c.dir * c.speed;
+      if (c.x < -40) { c.x = -40; c.dir = 1; }
+      if (c.x > STACK_FW - c.w + 40) { c.x = STACK_FW - c.w + 40; c.dir = -1; }
+      for (const f of gs.falling) { f.y += f.vy; f.vy += .4; }
+      gs.falling = gs.falling.filter(f => f.y < 400);
+      gs.cam += (Math.max(0, gs.n - 7) * BH - gs.cam) * .12;
+      if (gs.flash > 0) gs.flash--;
+      if (!inp.taps.length) return;
+      const prev = gs.blocks[gs.blocks.length - 1], y = 240 - (gs.blocks.length + 1) * BH;
+      if (Math.abs(c.x - prev.x) <= 3) { gs.blocks.push({ x: prev.x, w: Math.min(120, prev.w + 3) }); gs.flash = 24; sfx('perfect'); }
+      else {
+        const l = Math.max(c.x, prev.x), r = Math.min(c.x + c.w, prev.x + prev.w);
+        if (r - l <= 0) { gs.falling.push({ x: c.x, w: c.w, y, vy: 0 }); gs.done = true; sfx('die'); return; }
+        gs.blocks.push({ x: l, w: r - l });
+        gs.falling.push(c.x < l ? { x: c.x, w: l - c.x, y, vy: 0 } : { x: r, w: c.x + c.w - r, y, vy: 0 });
+        sfx('jump');
+      }
+      gs.n++; stackSpawn(gs);
+    },
+    value: gs => gs.n * 1000 + Math.round(gs.blocks[gs.blocks.length - 1].w),
+    show: gs => `${gs.n} 層`, disp: v => `${Math.floor(v / 1000)} 層`,
+    render(g, gs, cute) {
+      const ox = fieldX(STACK_FW), col = i => `hsl(${(330 + i * 14) % 360},${cute ? 85 : 90}%,${cute ? 74 : 62}%)`;
+      g.save(); g.translate(ox, gs.cam);
+      g.fillStyle = cute ? '#ffe3ef' : '#2a0f30'; g.fillRect(-200, 240, STACK_FW + 400, 300);
+      gs.blocks.forEach((b, i) => { g.fillStyle = col(i); g.beginPath(); g.roundRect(b.x, 240 - (i + 1) * BH, b.w, BH - 1, 4); g.fill(); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(b.x + 3, 240 - (i + 1) * BH + 2, b.w - 6, 2); });
+      if (!gs.done) { const i = gs.blocks.length, c = gs.cur; g.fillStyle = col(i); g.beginPath(); g.roundRect(c.x, 240 - (i + 1) * BH, c.w, BH - 1, 4); g.fill(); g.fillStyle = '#ff4f9a'; heart(g, c.x + c.w / 2, 240 - (i + 1) * BH - 12, 5); }
+      for (const f of gs.falling) { g.fillStyle = 'rgba(200,120,160,.7)'; g.fillRect(f.x, f.y, f.w, BH - 1); }
+      g.restore();
+      if (gs.flash) { g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ffb800'; g.fillText('PERFECT ✨', viewW / 2, 70); }
+      g.fillStyle = cute ? 'rgba(120,60,120,.2)' : 'rgba(255,255,255,.2)'; g.fillRect(ox, 252, STACK_FW, 4);
+      g.fillStyle = '#ff4f9a'; g.fillRect(ox, 252, STACK_FW * (1 - gs.t / 2700), 4);
+    } },
+  rhythm: { name: '愛心節拍', icon: '🎵', lowerBetter: false, handicap: 400,
+    rule: '愛心落到線上時，點那一邊（左半 / 右半螢幕）・越準分越高',
+    init(seed, L) {
+      const R = mulberry32(seed), bpm = Math.min(172, 96 + 8 * L), beat = 60 / bpm, notes = [];
+      for (let k = 0, t = 2; t < 30; k++, t = 2 + k * beat / 2) {
+        const half = k % 2 === 1;
+        let p = Math.min(.85, .4 + .05 * L + .3 * (t - 2) / 28);
+        if (half) p = L >= 2 ? p * .45 : 0;
+        if (R() < p) {
+          const lane = R() < .5 ? 0 : 1;
+          notes.push({ t, lane, hit: null });
+          if (L >= 3 && !half && R() < Math.min(.25, .05 * L)) notes.push({ t, lane: 1 - lane, hit: null });
+        }
+      }
+      return { notes, beat, lead: Math.max(.75, 1.4 - .06 * L), t: 0, score: 0, combo: 0, judge: '', jt: 0, done: false, lastBeat: -1, end: notes[notes.length - 1].t + 1.2 };
+    },
+    step(gs, inp) {
+      gs.t += 1 / 60; const now = gs.t;
+      const b = Math.floor((now - 2) / gs.beat);
+      if (now >= 2 && b !== gs.lastBeat) { gs.lastBeat = b; if (save.sound !== 'all') sfx('tick'); }
+      for (const tp of inp.taps) {
+        const lane = tp.side === 'left' ? 0 : 1, tt = now - (performance.now() - tp.t) / 1000;
+        let best = null, bd = 1;
+        for (const n of gs.notes) if (n.hit === null && n.lane === lane) { const d = Math.abs(n.t - tt); if (d < bd) { bd = d; best = n; } }
+        if (best && bd <= .13) {
+          const perfect = bd <= .05;
+          best.hit = perfect ? 'p' : 'g'; gs.combo++;
+          gs.score += Math.round((perfect ? 300 : 120) * (1 + Math.min(gs.combo, 50) / 50));
+          gs.judge = perfect ? 'PERFECT' : 'GOOD'; gs.jt = 30; sfx(perfect ? 'perfect' : 'jump');
+        } else { gs.combo = 0; gs.judge = '空拍'; gs.jt = 20; }
+      }
+      for (const n of gs.notes) if (n.hit === null && now - n.t > .13) { n.hit = 'm'; gs.combo = 0; gs.judge = 'MISS'; gs.jt = 25; }
+      if (gs.jt > 0) gs.jt--;
+      if (now > gs.end) gs.done = true;
+    },
+    value: gs => gs.score, show: gs => `${gs.score} 分`, disp: v => `${v} 分`,
+    render(g, gs, cute) {
+      const cx = viewW / 2, lanes = [cx - 70, cx + 70], HY = 225, now = gs.t;
+      for (let i = 0; i < 2; i++) {
+        g.fillStyle = cute ? 'rgba(255,143,191,.12)' : 'rgba(255,79,154,.08)'; g.fillRect(lanes[i] - 34, 20, 68, 240);
+        g.strokeStyle = i ? '#6cbcff' : '#ff7ab5'; g.lineWidth = 3; g.beginPath(); g.arc(lanes[i], HY, 18, 0, 7); g.stroke();
+        const held = [...touches.values()].includes(i ? 'jump' : 'slide');
+        if (held) { g.fillStyle = i ? 'rgba(108,188,255,.35)' : 'rgba(255,122,181,.35)'; g.beginPath(); g.arc(lanes[i], HY, 18, 0, 7); g.fill(); }
+      }
+      g.fillStyle = cute ? '#c79bd8' : '#aa86c4'; g.fillRect(cx - 110, HY - 1, 220, 2);
+      for (const n of gs.notes) {
+        if (n.hit && n.hit !== 'm') continue;
+        const y = HY - (n.t - now) / gs.lead * 195;
+        if (y < 10 || y > 268) continue;
+        g.fillStyle = n.hit === 'm' ? 'rgba(150,150,150,.5)' : (n.lane ? '#45b4ff' : '#ff4f9a');
+        heart(g, lanes[n.lane], y - 10, 11);
+      }
+      if (gs.jt) { g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.fillStyle = gs.judge === 'PERFECT' ? '#ffb800' : gs.judge === 'GOOD' ? '#4fd1a0' : '#999'; g.fillText(gs.judge, cx, 150); }
+      if (gs.combo >= 5) { g.font = 'bold 14px sans-serif'; g.textAlign = 'center'; g.fillStyle = cute ? '#6b3d7a' : '#fff'; g.fillText(`${gs.combo} COMBO`, cx, 172); }
+    } },
+  catch: { name: '接住愛心', icon: '🧺', lowerBetter: false, handicap: 15,
+    rule: '手指按住左右拖（或 ← →）移動籃子・💗＋10 金💛＋30・💣 −25 還會暈（30 秒）',
+    init(seed, L) {
+      const R = mulberry32(seed), items = [];
+      for (let t = 1; t < 30;) {
+        t += Math.max(.22, .75 - .04 * L - t * .012) * (.7 + R() * .6);
+        const r = R(), kind = r < Math.min(.35, .16 + .02 * L) ? 'bomb' : r > .92 ? 'gold' : 'heart';
+        items.push({ t, x: 20 + R() * (CATCH_FW - 40), kind, vy: (1.6 + .15 * L + t * .04) * (kind === 'gold' ? 1.35 : 1), y: -10, state: 0 });
+      }
+      return { items, t: 0, score: 0, bx: CATCH_FW / 2, stun: 0, done: false, pops: [] };
+    },
+    step(gs, inp) {
+      gs.t += 1 / 60;
+      if (gs.t >= 31) { gs.done = true; return; }
+      if (gs.stun > 0) gs.stun--;
+      else {
+        if (inp.dragX != null) { const target = inp.dragX * viewW - fieldX(CATCH_FW); gs.bx += Math.max(-9, Math.min(9, target - gs.bx)); }
+        if (inp.left) gs.bx -= 6; if (inp.right) gs.bx += 6;
+        gs.bx = Math.max(20, Math.min(CATCH_FW - 20, gs.bx));
+      }
+      for (const it of gs.items) {
+        if (it.state || gs.t < it.t) continue;
+        it.y += it.vy;
+        if (it.y >= 218 && it.y <= 234 && Math.abs(it.x - gs.bx) < 26) {
+          it.state = 1;
+          const d = it.kind === 'bomb' ? -25 : it.kind === 'gold' ? 30 : 10;
+          gs.score += d; gs.pops.push({ x: it.x, y: 205, d, life: 40 });
+          if (it.kind === 'bomb') { gs.stun = 36; shake = 10; sfx('hit'); } else sfx(it.kind === 'gold' ? 'perfect' : 'coin');
+        } else if (it.y > 280) it.state = 2;
+      }
+      for (const p of gs.pops) { p.y -= .6; p.life--; }
+      gs.pops = gs.pops.filter(p => p.life > 0);
+    },
+    value: gs => gs.score, show: gs => `${gs.score} 分`, disp: v => `${v} 分`,
+    render(g, gs, cute) {
+      const ox = fieldX(CATCH_FW);
+      g.fillStyle = cute ? '#ffe3ef' : '#2a0f30'; g.fillRect(ox - 200, 258, CATCH_FW + 400, 40);
+      g.fillStyle = cute ? '#ff8fbf' : '#ff4f9a'; g.fillRect(ox - 200, 258, CATCH_FW + 400, 3);
+      g.strokeStyle = cute ? 'rgba(200,120,170,.3)' : 'rgba(255,79,154,.25)'; g.setLineDash([4, 4]); g.strokeRect(ox, 10, CATCH_FW, 250); g.setLineDash([]);
+      g.save(); g.translate(ox, 0);
+      for (const it of gs.items) {
+        if (it.state || gs.t < it.t) continue;
+        if (it.kind === 'bomb') { g.fillStyle = '#3a2a40'; g.beginPath(); g.arc(it.x, it.y, 8, 0, 7); g.fill(); g.strokeStyle = '#ff9a3d'; g.lineWidth = 2; g.beginPath(); g.moveTo(it.x + 4, it.y - 6); g.lineTo(it.x + 8, it.y - 11); g.stroke(); }
+        else { g.fillStyle = it.kind === 'gold' ? '#ffc928' : '#ff4f9a'; heart(g, it.x, it.y - 8, it.kind === 'gold' ? 10 : 8); }
+      }
+      const av = role === 'solo' || !st ? save.avatar : st.p[myKey()].avatar;
+      drawRunner(g, gs.bx - PW / 2, 258, false, meColor(), gs.stun ? .5 : 1, null, av);
+      g.fillStyle = '#c98a5a'; g.beginPath(); g.moveTo(gs.bx - 24, 222); g.lineTo(gs.bx + 24, 222); g.lineTo(gs.bx + 17, 236); g.lineTo(gs.bx - 17, 236); g.closePath(); g.fill();
+      g.strokeStyle = '#a86a3c'; g.lineWidth = 1; for (let x = -18; x <= 18; x += 6) { g.beginPath(); g.moveTo(gs.bx + x, 223); g.lineTo(gs.bx + x * .72, 235); g.stroke(); }
+      if (gs.stun) { g.font = '14px sans-serif'; g.textAlign = 'center'; g.fillText('💫', gs.bx, 205); }
+      g.font = 'bold 13px sans-serif'; g.textAlign = 'center';
+      for (const p of gs.pops) { g.globalAlpha = p.life / 40; g.fillStyle = p.d < 0 ? '#e0002f' : '#ff4f9a'; g.fillText((p.d > 0 ? '+' : '') + p.d, p.x, p.y); }
+      g.globalAlpha = 1; g.restore();
+      g.fillStyle = '#ff4f9a'; g.fillRect(ox, 264, CATCH_FW * Math.max(0, 1 - gs.t / 31), 3);
+    } },
+  quick: { name: '快槍手', icon: '⚡', lowerBetter: true, handicap: 60,
+    rule: '出現粉紅愛心就馬上點！太早點罰 1 秒・藍色是假的別點・5 次反應時間加總',
+    init(seed, L) {
+      const R = mulberry32(seed), trials = [];
+      for (let i = 0; i < 5; i++) { const delay = 1.2 + R() * 2.3; trials.push({ delay, fake: L >= 3 && R() < Math.min(.5, .15 + .05 * L) ? delay * (.35 + R() * .3) : null, res: null }); }
+      return { trials, i: 0, phase: 'wait', pt: 0, goAt: 0, total: 0, done: false, msg: '', fakeOn: false };
+    },
+    step(gs, inp) {
+      gs.pt += 1 / 60;
+      const tr = gs.trials[gs.i];
+      if (gs.phase === 'wait') {
+        gs.fakeOn = tr.fake != null && gs.pt >= tr.fake && gs.pt < tr.fake + .55;
+        if (inp.taps.length) { sfx('die'); shake = 8; return quickNext(gs, 1000, gs.fakeOn ? '被騙了！+1000ms' : '太早了！+1000ms'); }
+        if (gs.pt >= tr.delay) { gs.phase = 'go'; gs.goAt = performance.now(); sfx('go'); }
+      } else if (gs.phase === 'go') {
+        if (inp.taps.length) { const rt = Math.max(80, Math.round(inp.taps[0].t - gs.goAt)); sfx(rt < 300 ? 'perfect' : 'jump'); return quickNext(gs, rt, rt + ' ms'); }
+        if (performance.now() - gs.goAt > 1500) quickNext(gs, 1500, '太慢了！');
+      } else if (gs.pt >= 1.1) { if (gs.i >= 5) gs.done = true; else { gs.phase = 'wait'; gs.pt = 0; } }
+    },
+    value: gs => gs.total, show: gs => `${gs.total} ms`, disp: v => `${v} ms`,
+    render(g, gs, cute) {
+      const cx = viewW / 2, cy = 125;
+      if (gs.phase === 'go') { g.fillStyle = '#ff4f9a'; heart(g, cx, cy - 70, 70); g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('按！', cx, cy + 5); }
+      else if (gs.phase === 'wait' && gs.fakeOn) { g.fillStyle = '#45b4ff'; heart(g, cx, cy - 70, 70); g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('假的！', cx, cy + 5); }
+      else if (gs.phase === 'wait') { g.fillStyle = cute ? 'rgba(150,110,170,.25)' : 'rgba(255,255,255,.1)'; g.beginPath(); g.arc(cx, cy, 70, 0, 7); g.fill(); g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillStyle = cute ? '#7a4a88' : '#ddd'; g.fillText('等一下…', cx, cy + 7); }
+      else { g.font = 'bold 26px sans-serif'; g.textAlign = 'center'; g.fillStyle = gs.msg.includes('+') || gs.msg.includes('慢') ? '#e0002f' : '#ff4f9a'; g.fillText(gs.msg, cx, cy + 8); }
+      g.font = '13px sans-serif'; g.textAlign = 'center'; g.fillStyle = cute ? '#6b3d7a' : '#fff';
+      g.fillText(gs.trials.map((t, i) => t.res == null ? (i === gs.i ? '●' : '○') : t.res).join('　'), cx, 235);
+    } },
+};
+const GAME_IDS = Object.keys(GAMES);
+const GAME_MODES = { mix: '🎲 輪替', runner: '🏃', stack: '🍰', rhythm: '🎵', catch: '🧺', quick: '⚡' };
+let gs = null;
+
+// ================= 主迴圈 =================
+function tick() {
+  if (shake > 0) shake--;
+  for (const pt of particles) { pt.x += pt.vx; pt.y += pt.vy; pt.vy += .15; pt.life--; }
+  particles = particles.filter(p => p.life > 0);
+  const tp = takeTaps();
+  if (!race) return;
+  const runner = race.game === 'runner';
+  if (opp && runner) { opp.x += (opp.tx - opp.x) * .35; opp.y += (opp.ty - opp.y) * .35; }
+  if (race.countdown > 0) {
+    if (race.countdown % 60 === 0 && race.countdown <= 180) sfx('beep');
+    if (--race.countdown === 0) {
+      sfx('go'); updateMusic();
+      if (race.game === 'rhythm' && Music.out) Music.set('rhythm', { bpm: 60 / gs.beat, startAt: actx.currentTime + 2, force: true });   // 第 2 秒的第一顆音符剛好落在拍點上
+      if (race.bonus) toast(`落後補償 💪 ${runner ? '提前起跑' : '成績加分'}`, 1600); }
+    return;
+  }
+  if (race.finished) { if (runner && !me.dead) me.x += course.speed * .6; return; }
+  race.frames++;
+  if (fx.hearts > 0) fx.hearts--;
+  if (fx.sticky > 0) fx.sticky--;
+  if (race.decider && race.frames % 45 === 0) sfx('beat');
+  if (!runner) {
+    const G = GAMES[race.game];
+    G.step(gs, { ...readInput(), taps: tp });
+    if (gs.done) finishGame();
+    else if (role !== 'solo' && race.frames % 10 === 0) send({ type: 'pos', raceId: race.raceId, sc: G.show(gs) });
+    return;
+  }
+  const prevCp = me.cp;
+  stepRunner(me, course, readInput());
+  if (me.cp !== prevCp) { sfx('cp'); toast('檢查點 ✓', 800); }
+  if (!me.dead && role !== 'solo') for (const it of course.items)
+    if (!it.got && Math.abs(me.x + 9 - it.x) < 16 && Math.abs(me.y - 13 - it.y) < 20) {
+      it.got = true;
+      if (!heldItem) { heldItem = Math.random() < .5 ? 'hearts' : 'sticky'; sfx('item'); toast(`撿到${ITEMS[heldItem].name}！按 ${ITEMS[heldItem].icon} 丟給對方`, 1500); updateItemBtn(); }
+    }
+  const t = race.frames / 60;
+  if (me.x >= course.finish) finishMe(t, t.toFixed(2) + ' 秒');
+  else if (race.deadline != null && t >= race.deadline) finishMe(Infinity, '慢了一步');
+  if (role !== 'solo' && race.frames % 5 === 0) send({ type: 'pos', raceId: race.raceId, x: Math.round(me.x), y: Math.round(me.y), sl: me.sliding, dd: me.dead > 0 });
+}
+
+// ================= 繪圖 =================
+const ctx = cv.getContext('2d');
+let scale = 1, viewW = 480, offY = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1);
+  cv.width = innerWidth * DPR; cv.height = innerHeight * DPR;
+  scale = Math.min(innerHeight / VH, innerWidth / 400);
+  viewW = innerWidth / scale || 400; offY = (innerHeight / scale - VH) / 2 || 0;
+}
+addEventListener('resize', resize); resize();
+
+// 慾火主題背景：燭光暈、緩慢飄落的玫瑰花瓣、絲綢光澤
+const petals = Array.from({ length: 22 }, () => ({ x: Math.random(), y: Math.random(), r: 4 + Math.random() * 6, s: .15 + Math.random() * .35, rot: Math.random() * 6, vr: (Math.random() - .5) * .02, sway: Math.random() * 6 }));
+function drawSultryBG(tNow) {
+  const W = innerWidth, H = innerHeight;
+  for (const [cx, cy, r, ph] of [[.12, .78, .45, 0], [.88, .7, .4, 2], [.5, .15, .5, 4]]) {
+    const fl = .75 + .25 * Math.sin(tNow / 260 + ph) * Math.sin(tNow / 410 + ph * 2);
+    const g = ctx.createRadialGradient(W * cx, H * cy, 0, W * cx, H * cy, Math.max(W, H) * r);
+    g.addColorStop(0, `rgba(255,150,80,${.16 * fl})`); g.addColorStop(.4, `rgba(200,30,50,${.08 * fl})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.strokeStyle = 'rgba(255,200,190,.05)'; ctx.lineWidth = 40;
+  for (let i = 0; i < 3; i++) { ctx.beginPath(); const y0 = H * (.3 + i * .25); ctx.moveTo(-50, y0); for (let x = -50; x <= W + 50; x += 40) ctx.lineTo(x, y0 + Math.sin(x / 140 + tNow / 2400 + i) * 26); ctx.stroke(); }
+  for (const p of petals) {
+    p.y += p.s / H * 1.2; p.rot += p.vr; if (p.y > 1.05) { p.y = -.05; p.x = Math.random(); }
+    const x = p.x * W + Math.sin(tNow / 1400 + p.sway) * 18, y = p.y * H;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.rot);
+    const g = ctx.createLinearGradient(-p.r, 0, p.r, 0); g.addColorStop(0, 'rgba(120,8,30,.75)'); g.addColorStop(1, 'rgba(210,40,70,.75)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -p.r); ctx.bezierCurveTo(p.r, -p.r * .6, p.r * .8, p.r * .7, 0, p.r); ctx.bezierCurveTo(-p.r * .8, p.r * .7, -p.r, -p.r * .6, 0, -p.r); ctx.fill();
+    ctx.restore();
+  }
+  const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.max(W, H) * .75);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+const stars = Array.from({ length: 70 }, () => ({ x: Math.random() * 2000, y: Math.random() * 180, r: Math.random() * 1.3 + .3 }));
+const clouds = Array.from({ length: 7 }, (_, i) => ({ x: i * 300 + Math.random() * 120, y: 20 + Math.random() * 80, s: .7 + Math.random() * .6 }));
+function heart(g, x, y, s) {
+  g.beginPath(); g.moveTo(x, y + s * .3);
+  g.bezierCurveTo(x, y - s * .2, x - s, y - s * .2, x - s, y + s * .25);
+  g.bezierCurveTo(x - s, y + s * .7, x, y + s, x, y + s * 1.2);
+  g.bezierCurveTo(x, y + s, x + s, y + s * .7, x + s, y + s * .25);
+  g.bezierCurveTo(x + s, y - s * .2, x, y - s * .2, x, y + s * .3); g.fill();
+}
+function burst(x, y, color, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 1 + Math.random() * 3; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5, life: 30 + Math.random() * 20, color, r: 1.5 + Math.random() * 2 }); } }
+function puff(x, y) { for (let i = 0; i < 6; i++) particles.push({ x, y, vx: (Math.random() - .5) * 2, vy: Math.random() * 1.5, life: 18, color: theme() === 'cute' ? 'rgba(255,170,210,.8)' : 'rgba(255,255,255,.7)', r: 2 }); }
+
+function drawEars(g, av, w, h, color) {
+  g.fillStyle = color;
+  if (av === 'bunny') { for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 4.5, -h - 7, 3, 8, s * .15, 0, 7); g.fill(); g.fillStyle = '#ffd3e6'; g.beginPath(); g.ellipse(s * 4.5, -h - 7, 1.3, 5.5, s * .15, 0, 7); g.fill(); g.fillStyle = color; } }
+  else if (av === 'cat') { for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 2, -h + 2); g.lineTo(s * 7, -h - 7); g.lineTo(s * 9, -h + 3); g.closePath(); g.fill(); } }
+  else if (av === 'bear') { for (const s of [-1, 1]) { g.beginPath(); g.arc(s * 6.5, -h + 1, 4, 0, 7); g.fill(); } }
+  else if (av === 'dog') { for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * (w / 2 + 1), -h + 8, 3, 7, s * -.3, 0, 7); g.fill(); } }
+}
+function drawRunner(g, x, y, sliding, color, alpha, name, av, sq = 0) {
+  const h = sliding ? PH_SLIDE : PH, w = sliding ? PW + 6 : PW, cute = theme() === 'cute';
+  g.save(); g.globalAlpha = alpha; g.translate(x + PW / 2, y);
+  g.scale(1 + sq * .3, 1 - sq * .3);
+  if (!cute) { g.shadowColor = color; g.shadowBlur = 12; }
+  if (!sliding) drawEars(g, av, w, h, color);
+  g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -h, w, h, cute ? 9 : 6); g.fill();
+  g.shadowBlur = 0;
+  const ey = sliding ? -7 : -16;
+  for (const s of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(s * 4 + 2, ey, 3.2, 0, 7); g.fill(); g.fillStyle = '#2a1636'; g.beginPath(); g.arc(s * 4 + 3, ey, 1.8, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(s * 4 + 3.6, ey - .8, .6, 0, 7); g.fill(); }
+  g.fillStyle = cute ? 'rgba(255,90,140,.45)' : 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(-4, ey + 5, 2.6, 1.5, 0, 0, 7); g.ellipse(9, ey + 5, 2.6, 1.5, 0, 0, 7); g.fill();
+  if (av === 'cat' || av === 'bunny') { g.strokeStyle = 'rgba(40,20,50,.6)'; g.lineWidth = .8; g.beginPath(); g.arc(1.5, ey + 4, 1.4, 0, 3.14); g.arc(4.5, ey + 4, 1.4, 0, 3.14); g.stroke(); }
+  if (name) { g.font = 'bold 9px sans-serif'; g.textAlign = 'center'; g.fillStyle = color; g.fillText(name, 0, -h - (sliding ? 5 : 16)); }
+  g.restore();
+}
+
+function render() {
+  const cute = theme() === 'cute', sul = theme() === 'sultry', tNow = performance.now();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const grad = ctx.createLinearGradient(0, 0, 0, innerHeight);
+  if (cute) { grad.addColorStop(0, '#ffd9ec'); grad.addColorStop(.6, '#fff1f8'); grad.addColorStop(1, '#dcebff'); }
+  else if (sul) { grad.addColorStop(0, '#0b0205'); grad.addColorStop(.55, '#2a0712'); grad.addColorStop(1, '#4a0b1c'); }
+  else { grad.addColorStop(0, '#12061a'); grad.addColorStop(.6, '#3a1240'); grad.addColorStop(1, '#5c1a48'); }
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, innerWidth, innerHeight);
+  if (sul) drawSultryBG(tNow);
+  if (race && race.decider && race.countdown === 0) { ctx.fillStyle = `rgba(255,0,60,${.12 + .08 * Math.sin(tNow / 140)})`; ctx.fillRect(0, 0, innerWidth, innerHeight); }
+  ctx.setTransform(DPR * scale, 0, 0, DPR * scale, 0, DPR * scale * offY);
+  if (shake) ctx.translate((Math.random() - .5) * shake * .6, (Math.random() - .5) * shake * .6);
+
+  const camX = me ? me.x - viewW * .28 : tNow / 12;
+  if (sul) ctx.fillStyle = 'rgba(200,16,46,.06)';
+  else if (cute) {
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (const c of clouds) { const cx = ((c.x - camX * .15) % 2100 + 2100) % 2100 - 150; ctx.beginPath(); ctx.ellipse(cx, c.y, 34 * c.s, 12 * c.s, 0, 0, 7); ctx.ellipse(cx + 18 * c.s, c.y - 8 * c.s, 20 * c.s, 13 * c.s, 0, 0, 7); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,130,180,.12)';
+  } else {
+    for (const s of stars) { ctx.fillStyle = `rgba(255,220,240,${.4 + .3 * Math.sin(tNow / 700 + s.x)})`; ctx.beginPath(); ctx.arc(((s.x - camX * .1) % 2000 + 2000) % 2000 % (viewW + 20), s.y - 40, s.r, 0, 7); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,79,154,.07)';
+  }
+  for (let i = 0; i < 8; i++) { const hx = ((i * 260 - camX * .3) % 2080 + 2080) % 2080 - 100; heart(ctx, hx, 40 + (i * 37) % 90, 22 + (i % 3) * 10); }
+
+  if (race && gs && race.game !== 'runner') {
+    GAMES[race.game].render(ctx, gs, cute);
+    for (const p of particles) { ctx.globalAlpha = Math.min(1, p.life / 20); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    return drawHUD();
+  }
+  const groundFill = cute ? '#ffe3ef' : sul ? '#1a040b' : '#2a0f30', edge = cute ? '#ff8fbf' : sul ? '#d4a24c' : '#ff4f9a';
+  if (!course) { ctx.fillStyle = groundFill; ctx.fillRect(-50, GY, viewW + 100, 200); ctx.fillStyle = edge; ctx.fillRect(-50, GY, viewW + 100, cute ? 5 : 2); return; }
+
+  ctx.save(); ctx.translate(-camX, 0);
+  const vis = o => o.x + o.w > camX - 20 && o.x < camX + viewW + 20;
+  for (const cp of course.cps) if (cp > camX - 20 && cp < camX + viewW + 20) {
+    ctx.fillStyle = cute ? '#c79bd8' : '#aa86c4'; ctx.fillRect(cp, GY - 46, 2, 46);
+    ctx.fillStyle = me.cp >= cp ? '#4fd1a0' : (cute ? '#ffb3d1' : '#c9a9cf'); ctx.beginPath(); ctx.moveTo(cp + 2, GY - 46); ctx.lineTo(cp + 18, GY - 40); ctx.lineTo(cp + 2, GY - 34); ctx.fill();
+  }
+  const fxx = course.finish;
+  for (let i = 0; i < 12; i++) { ctx.fillStyle = i % 2 ? '#fff' : (cute ? '#ff8fbf' : '#1c0b22'); ctx.fillRect(fxx, GY - 120 + i * 10, 8, 10); ctx.fillStyle = i % 2 ? (cute ? '#ff8fbf' : '#1c0b22') : '#fff'; ctx.fillRect(fxx + 8, GY - 120 + i * 10, 8, 10); }
+  ctx.fillStyle = '#ff4f9a'; heart(ctx, fxx + 8, GY - 150, 14);
+  for (const s of course.solids) if (vis(s)) {
+    ctx.fillStyle = groundFill; ctx.fillRect(s.x, s.y, s.w, s.h);
+    if (cute) {
+      ctx.fillStyle = edge; ctx.beginPath(); ctx.roundRect(s.x, s.y, s.w, 6, 3); ctx.fill();
+      ctx.fillStyle = '#fff'; for (let x = s.x + 6; x < s.x + s.w - 3; x += 14) { ctx.beginPath(); ctx.arc(x, s.y + 3, 1.2, 0, 7); ctx.fill(); }
+      ctx.fillStyle = 'rgba(255,143,191,.18)'; for (let x = s.x + 10; x < s.x + s.w - 6; x += 22) ctx.fillRect(x, s.y + 16, 6, 6);
+    } else {
+      ctx.fillStyle = edge; ctx.shadowColor = edge; ctx.shadowBlur = 8; ctx.fillRect(s.x, s.y, s.w, 2); ctx.shadowBlur = 0;
+      ctx.fillStyle = sul ? 'rgba(212,162,76,.22)' : 'rgba(255,79,154,.25)'; ctx.fillRect(s.x, s.y, 1.5, s.h); ctx.fillRect(s.x + s.w - 1.5, s.y, 1.5, s.h);
+      if (sul) { ctx.fillStyle = 'rgba(120,14,36,.35)'; for (let x = s.x + 8; x < s.x + s.w - 8; x += 26) ctx.fillRect(x, s.y + 10, 1, s.h); }
+    }
+  }
+  for (const h of course.hazards) if (vis(h)) {
+    if (h.t === 'spike') {
+      ctx.fillStyle = cute ? '#ff6f9f' : sul ? '#e0b05a' : '#ffd1e6';
+      if (cute) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; } else { ctx.shadowColor = sul ? '#ffcf7a' : '#ff6fb0'; ctx.shadowBlur = 6; }
+      for (let x = h.x; x < h.x + h.w - 1; x += 12) { ctx.beginPath(); ctx.moveTo(x, h.y + h.h); ctx.lineTo(x + 6, h.y); ctx.lineTo(x + 12, h.y + h.h); ctx.closePath(); ctx.fill(); if (cute) ctx.stroke(); }
+      ctx.shadowBlur = 0;
+    } else {
+      const bottom = h.y + h.h;
+      if (sul) {   // 紅絲絨布簾：鑽過去
+        for (let x = h.x, k = 0; x < h.x + h.w; x += 6, k++) {
+          const gr = ctx.createLinearGradient(x, 0, x + 6, 0); gr.addColorStop(0, '#5e0718'); gr.addColorStop(.5, k % 2 ? '#b0122f' : '#8e0b25'); gr.addColorStop(1, '#4a0512');
+          ctx.fillStyle = gr; ctx.fillRect(x, bottom - 260, Math.min(6, h.x + h.w - x), 260 + Math.sin(tNow / 300 + k) * 1.5);
+        }
+        ctx.fillStyle = '#d4a24c'; ctx.shadowColor = '#ffcf7a'; ctx.shadowBlur = 8; ctx.fillRect(h.x - 3, bottom - 3, h.w + 6, 3); ctx.shadowBlur = 0;
+        ctx.fillStyle = '#f3c98b'; for (let x = h.x; x < h.x + h.w; x += 10) { ctx.beginPath(); ctx.arc(x + 5, bottom + 1, 1.6, 0, 7); ctx.fill(); }
+      } else if (cute) {
+        for (let x = h.x, k = 0; x < h.x + h.w; x += 8, k++) { ctx.fillStyle = k % 2 ? '#ffffff' : '#ff9cc6'; ctx.fillRect(x, bottom - 260, Math.min(8, h.x + h.w - x), 260); }
+        ctx.fillStyle = '#ff5c9a'; ctx.beginPath(); ctx.roundRect(h.x - 3, bottom - 5, h.w + 6, 5, 2.5); ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(255,40,90,.14)'; ctx.fillRect(h.x, bottom - 260, h.w, 260);
+        ctx.strokeStyle = `rgba(255,60,110,${.5 + .3 * Math.sin(tNow / 80)})`; ctx.lineWidth = 1;
+        for (let x = h.x + 4; x < h.x + h.w; x += 8) { ctx.beginPath(); ctx.moveTo(x, bottom - 260); ctx.lineTo(x, bottom); ctx.stroke(); }
+        ctx.fillStyle = '#ff2d6f'; ctx.shadowColor = '#ff2d6f'; ctx.shadowBlur = 10; ctx.fillRect(h.x - 2, bottom - 3, h.w + 4, 3); ctx.shadowBlur = 0;
+      }
+    }
+  }
+  if (role !== 'solo') for (const it of course.items) if (!it.got && it.x > camX - 20 && it.x < camX + viewW + 20) {
+    const b = Math.sin(tNow / 200 + it.x) * 3;
+    ctx.fillStyle = 'rgba(255,200,80,.35)'; ctx.beginPath(); ctx.arc(it.x, it.y + b, 10, 0, 7); ctx.fill();
+    ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🎁', it.x, it.y + b); ctx.textBaseline = 'alphabetic';
+  }
+  if (opp && st && st.p[oppKey()]) drawRunner(ctx, opp.x, opp.y, opp.sl, oppColor(), opp.dd ? .15 : .45, st.p[oppKey()].name, st.p[oppKey()].avatar);
+  if (!me.dead) {
+    if (fx.sticky > 0) { ctx.fillStyle = 'rgba(255,190,40,.8)'; ctx.beginPath(); ctx.ellipse(me.x + 9, me.y, 16, 4, 0, 0, 7); ctx.fill(); }
+    drawRunner(ctx, me.x, me.y, me.sliding, meColor(), 1, null, role === 'solo' || !st ? save.avatar : st.p[myKey()].avatar, me.squash);
+  }
+  for (const p of particles) { ctx.globalAlpha = Math.min(1, p.life / 20); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  if (fx.hearts > 0) {   // 愛心炸彈：大愛心擋住前方
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const a = Math.min(1, fx.hearts / 30) * .92;
+    ctx.fillStyle = `rgba(255,79,154,${a})`;
+    for (let i = 0; i < 6; i++) { const x = innerWidth * (.42 + (i % 3) * .2) + Math.sin(tNow / 300 + i) * 20, y = innerHeight * (.18 + Math.floor(i / 3) * .35); heart(ctx, x, y, Math.min(innerWidth, innerHeight) * .16); }
+  }
+  drawHUD();
+}
+
+function drawHUD() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const cute = theme() === 'cute', top = 10, W = innerWidth, bx = 16, bw = W - 32, runner = race.game === 'runner', G = GAMES[race.game];
+  const ink = cute ? '#6b3d7a' : '#fff';
+  if (runner) {
+    ctx.fillStyle = cute ? 'rgba(120,60,120,.15)' : 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.roundRect(bx, top, bw, 6, 3); ctx.fill();
+    const prog = x => Math.max(0, Math.min(1, x / course.finish));
+    if (opp) { ctx.fillStyle = oppColor(); ctx.beginPath(); ctx.arc(bx + bw * prog(opp.x), top + 3, 6, 0, 7); ctx.fill(); }
+    ctx.fillStyle = meColor(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + bw * prog(me.x), top + 3, 7, 0, 7); ctx.fill(); ctx.stroke();
+    for (const cp of course.cps) { ctx.fillStyle = cute ? 'rgba(120,60,120,.4)' : 'rgba(255,255,255,.5)'; ctx.fillRect(bx + bw * prog(cp) - 1, top - 2, 2, 10); }
+  }
+
+  ctx.font = 'bold 14px "PingFang TC",sans-serif'; ctx.textBaseline = 'top'; ctx.fillStyle = ink; ctx.textAlign = 'left';
+  const r = role === 'solo' ? `練習・難度 ${save.practice}` : (race.decider ? '🔥 決勝局' : `第 ${st.round} 回合`) + (st.stake === 2 ? '・懲罰×2' : '');
+  ctx.fillText(runner ? `${r}　⏱ ${(race.frames / 60).toFixed(2)}　💥 ${me.deaths}` : `${r}　${G.icon} 我：${G.show(gs)}`, bx, top + 14);
+  if (st && st.p.guest) {
+    ctx.textAlign = 'right'; ctx.font = '13px "PingFang TC",sans-serif';
+    const tag = p => `${p.name} ${p.wins}勝${st.spice !== 'sweet' ? ' 👕' + p.clothes : ''}`;
+    ctx.fillText(`${tag(st.p.host)}  vs  ${tag(st.p.guest)}`, W - 16, top + 14);
+    if (!runner && opp) { ctx.fillStyle = oppColor(); ctx.font = 'bold 13px "PingFang TC",sans-serif'; ctx.fillText(`對方：${opp.sc || '…'}`, W - 16, top + 34); }
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const mid = innerHeight / 2;
+  if (race.countdown > 0) {
+    ctx.fillStyle = cute ? 'rgba(255,240,247,.88)' : 'rgba(20,6,26,.8)'; ctx.fillRect(0, mid - 95, W, 190);
+    ctx.font = 'bold 26px "PingFang TC",sans-serif'; ctx.fillStyle = ink;
+    ctx.fillText(`${G.icon} ${G.name}`, W / 2, mid - 62);
+    ctx.font = '14px "PingFang TC",sans-serif'; ctx.fillStyle = cute ? '#7a4a88' : 'rgba(255,255,255,.85)';
+    ctx.fillText(G.rule, W / 2, mid - 30);
+    if (race.decider) { ctx.fillStyle = '#e0002f'; ctx.fillText('🔥 決勝局：難度 +2，輸了就…', W / 2, mid - 8); }
+    if (race.countdown <= 180) { ctx.font = 'bold 64px sans-serif'; ctx.fillStyle = cute ? '#ff6fae' : '#ffd1e6'; ctx.fillText(Math.ceil(race.countdown / 60), W / 2, mid + 45); }
+  } else if (race.frames < 40 && race.game !== 'quick') { ctx.font = 'bold 60px sans-serif'; ctx.fillStyle = '#ff4f9a'; ctx.fillText('GO!', W / 2, mid); }
+  if (fx.sticky > 0) { ctx.font = 'bold 16px "PingFang TC",sans-serif'; ctx.fillStyle = '#e09a00'; ctx.fillText('🍯 黏住了！不能跳', W / 2, innerHeight * .3); }
+  if (race.finished && role !== 'solo') {
+    ctx.fillStyle = cute ? 'rgba(255,240,247,.85)' : 'rgba(20,6,26,.75)'; ctx.fillRect(0, mid - 30, W, 60);
+    ctx.font = 'bold 20px "PingFang TC",sans-serif'; ctx.fillStyle = ink;
+    ctx.fillText(race.myR === Infinity ? (race.myDisp === '認輸' ? '你認輸了…' : '對方先到了…') : `完成！${race.myDisp}・等待對方…`, W / 2, mid);
+  }
+  if (innerHeight > innerWidth * 1.1) { ctx.font = '13px "PingFang TC",sans-serif'; ctx.fillStyle = cute ? '#9a7aa8' : 'rgba(255,255,255,.6)'; ctx.fillText('📱 手機橫放視野比較大', W / 2, innerHeight - 40); }
+  ctx.textBaseline = 'alphabetic';
+}
+
+let last = performance.now(), acc = 0;
+function loop(now) {
+  acc += Math.min(200, now - last); last = now;
+  while (acc >= 1000 / 60) { tick(); acc -= 1000 / 60; }
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ================= 介面事件 =================
+function goHome() {
+  clearTimers(); race = null; course = null; me = null; opp = null; applyTheme();
+  $('name').value = save.name; $('cVal').textContent = save.clothes + ' 件';
+  $('homeSub').innerHTML = save.theme === 'sultry' ? '只屬於我們兩個人的夜晚遊戲<br>輸一回合，就要脫下一點點……願賭服輸' : '遠距離情侶的小遊戲 PK・每回合換一種遊戲<br>輸的人抽懲罰卡，願賭服輸 😈';
+  seg($('avatarSeg'), AVATARS, save.avatar, k => { save.avatar = k; persist(); goHome(); });
+  $('btnTheme').textContent = '練習畫面：' + THEMES[save.theme];
+  const code = new URLSearchParams(location.search).get('room');
+  if (code && !$('joinCode').value) $('joinCode').value = code;
+  $('stats').innerHTML = `戰績：整場 ${save.matchW} 勝 ${save.matchL} 敗・回合 ${save.roundW} 勝 ${save.roundL} 敗・最高撐到第 ${save.bestRound} 回合`;
+  show('home');
+}
+function needName() { save.name = $('name').value.trim(); if (!save.name) { toast('先輸入你的名字'); $('name').focus(); return false; } persist(); return true; }
+$('cMinus').onclick = () => { save.clothes = Math.max(1, save.clothes - 1); persist(); $('cVal').textContent = save.clothes + ' 件'; };
+$('cPlus').onclick = () => { save.clothes = Math.min(12, save.clothes + 1); persist(); $('cVal').textContent = save.clothes + ' 件'; };
+$('btnTheme').onclick = () => { const k = Object.keys(THEMES); save.theme = k[(k.indexOf(save.theme) + 1) % k.length]; persist(); goHome(); };
+$('btnCreate').onclick = () => { if (needName()) hostCreate(); };
+$('btnJoin').onclick = () => {
+  const c = $('joinCode').value.trim().toUpperCase();
+  if (!needName()) return;
+  if (c.length !== 5) return toast('房間碼是 5 個字');
+  guestJoin(c);
+};
+$('btnPractice').onclick = () => { save.name = $('name').value.trim() || save.name; persist(); startPractice(); };
+$('btnShare').onclick = async () => {
+  const url = location.origin + location.pathname + '?room=' + roomCode;
+  const text = `來跟我 PK「心跳對決」😏 輸的人要受罰喔～房間碼 ${roomCode}`;
+  try { if (navigator.share) return await navigator.share({ title: '心跳對決', text, url }); } catch (e) { return; }
+  try { await navigator.clipboard.writeText(text + '\n' + url); toast('連結已複製，貼給對方'); } catch (e) { toast(url, 6000); }
+};
+$('tMinus').onclick = () => { st.target = save.target = Math.max(2, st.target - 1); persist(); hostBroadcast(); };
+$('tPlus').onclick = () => { st.target = save.target = Math.min(9, st.target + 1); persist(); hostBroadcast(); };
+$('btnStart').onclick = () => { if (role === 'host' && st.p.guest) hostStartRound(); };
+$('btnLeave').onclick = () => { send({ type: 'quit' }); endMatchLocal(); };
+$('btnPick').onclick = () => act('pick', { pickId: st.pickId, idx: pickSel });
+$('btnDone').onclick = () => act('done', { pickId: st.pickId });
+$('btnRaise').onclick = () => act('raise');
+$('btnPass').onclick = () => { if (confirm('用掉免死金牌？這次免罰，但下一回合輸的話要挑兩張。整場只有一張。')) act('pass'); };
+$('btnRedo').onclick = () => { if (confirm('驗收不通過，要對方再抽一張懲罰？（每回合限一次）')) act('redo'); };
+
+// ---- 秘密準備 ----
+let ctSel = '任務';
+function renderSecret() {
+  seg($('ctSeg'), { 撒嬌: '撒嬌', 真心話: '真心話', 大冒險: '大冒險', 任務: '任務', 脫衣: '脫衣' }, ctSel, k => { ctSel = k; renderSecret(); });
+  $('myCardList').innerHTML = save.myCards.map((c, i) => `<div class="mine"><span><b>${c.ty}</b>　${esc(c.tx)}</span><button data-i="${i}">刪除</button></div>`).join('')
+    || '<div class="small" style="margin-top:6px">還沒寫，寫幾張讓對方抽到嚇一跳 😏</div>';
+  $('myCardList').querySelectorAll('button').forEach(b => b.onclick = () => { save.myCards.splice(+b.dataset.i, 1); persist(); renderSecret(); });
+  $('btnAddCard').disabled = save.myCards.length >= 6;
+}
+$('btnSecret').onclick = () => { $('betInput').value = save.bet; renderSecret(); show('secret'); };
+$('betInput').addEventListener('input', e => { save.bet = e.target.value.trim(); persist(); });
+$('btnAddCard').onclick = () => {
+  const tx = $('cardInput').value.trim();
+  if (!tx) return toast('先寫內容');
+  if (save.myCards.length >= 6) return;
+  save.myCards.push({ ty: ctSel, tx: ctSel === '脫衣' && !tx.includes('脫') ? '脫一件，' + tx : tx, strip: ctSel === '脫衣' ? 1 : 0 });
+  $('cardInput').value = ''; persist(); renderSecret();
+};
+$('btnSecretDone').onclick = () => {
+  save.bet = $('betInput').value.trim(); persist();
+  if (role === 'host') { setSecret('host', save.myCards, save.bet); hostBroadcast(); }
+  else send({ type: 'secret', cards: save.myCards, bet: save.bet });
+  renderLobby(); show('lobby');
+  toast('已封存 🤐 對方看不到');
+};
+$('btnAccept').onclick = () => { $('raiseModal').classList.remove('show'); act('raiseAns', { accept: true }); };
+$('btnDecline').onclick = () => { $('raiseModal').classList.remove('show'); act('raiseAns', { accept: false }); };
+$('btnEndMatch').onclick = () => { if (confirm('確定要結束這場嗎？對方也會一起結束。')) { send({ type: 'quit' }); endMatchLocal(); } };
+$('btnRematch').onclick = () => act('rematch');
+$('btnOverHome').onclick = () => { send({ type: 'quit' }); endMatchLocal(); };
+$('btnGiveUp').onclick = () => {
+  if (!race || race.finished || race.countdown > 0) return;
+  if (role === 'solo') return showPracticeMenu();
+  if (confirm('確定認輸這回合？')) finishMe(Infinity, '認輸');
+};
+$('pRetry').onclick = () => startRace();
+$('pNext').onclick = () => { save.practice = Math.min(12, save.practice + 1); persist(); showPracticeMenu(); };
+$('pPrev').onclick = () => { save.practice = Math.max(1, save.practice - 1); persist(); showPracticeMenu(); };
+$('pHome').onclick = () => { role = null; goHome(); };
+$('btnSound').onclick = e => {
+  e.stopPropagation();
+  save.sound = { all: 'sfx', sfx: 'none', none: 'all' }[save.sound]; persist();
+  Music.ensure(); Music.volume(); renderSoundBtn(); updateMusic();
+  toast({ all: '🔊 音樂＋音效', sfx: '🎵 音樂關閉，保留音效', none: '🔇 全部靜音' }[save.sound], 1200);
+};
+renderSoundBtn();
+goHome();
+</script>
+</body>
+</html>

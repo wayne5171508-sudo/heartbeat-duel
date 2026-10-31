@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#12030a">
+<title>夜色挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&display=swap">
+<style>
+  :root{
+    --bg:#12030a;--ink:#f6e7e1;--muted:#c9a39a;--line:rgba(212,162,76,.32);--gold:#d4a24c;--gold2:#f3c98b;--crimson:#c8102e;
+    --card:linear-gradient(160deg,rgba(52,9,20,.94),rgba(22,4,10,.94));
+    --lv1:linear-gradient(120deg,#9e2b4c,#e0587a);--lv2:linear-gradient(120deg,#7a0a22,#d0193a);
+    --lv3:linear-gradient(120deg,#2a0510,#7e0d26 60%,#a8122f);--lv4:linear-gradient(120deg,#0a0105,#3b0614 55%,#6a0a20);
+    --safe-b:env(safe-area-inset-bottom);--safe-t:env(safe-area-inset-top);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;font-size:16px}
+  body{background:radial-gradient(ellipse at 50% -10%,#5a0c22 0%,#2a0712 40%,#0b0205 85%) fixed;overscroll-behavior:none;min-height:100vh;min-height:100dvh}
+  .serif{font-family:"Noto Serif TC",serif}
+  main{max-width:520px;margin:0 auto;padding:calc(var(--safe-t) + 18px) 16px calc(var(--safe-b) + 104px)}
+  h1{font-family:"Noto Serif TC",serif;font-size:30px;letter-spacing:4px;margin:6px 0 2px;text-align:center;
+    background:linear-gradient(90deg,#f3c98b,#e8a0a8 50%,#d4a24c);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{text-align:center;color:var(--muted);font-family:"Noto Serif TC",serif;font-size:14px;letter-spacing:1px;margin:0 0 18px}
+  h2{font-family:"Noto Serif TC",serif;font-size:20px;letter-spacing:2px;margin:18px 0 10px;color:#f3d6c8}
+  .muted{color:var(--muted);font-size:14px;line-height:1.6}
+  button{font:inherit;color:var(--ink);border:0;cursor:pointer;-webkit-user-select:none;user-select:none;transition:transform .15s,filter .15s,box-shadow .2s}
+  button:active{transform:scale(.97)}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+  .btn{display:block;width:100%;min-height:50px;border-radius:16px;padding:12px 16px;font-size:16px;font-weight:700;letter-spacing:2px;
+    background:linear-gradient(100deg,#8e0b25,#c8102e 45%,#b8862f);box-shadow:0 6px 24px rgba(200,16,46,.4)}
+  .btn.ghost{background:rgba(255,255,255,.04);border:1px solid var(--line);box-shadow:none;font-weight:500;letter-spacing:1px}
+  .btn:disabled{opacity:.4}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+  /* 分段切換 */
+  .seg{display:flex;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+  .seg button{flex:1;min-height:42px;border-radius:10px;background:transparent;color:var(--muted);font-size:15px}
+  .seg button.on{background:linear-gradient(100deg,#8e0b25,#c8102e);color:#fff;box-shadow:0 0 0 1px var(--gold) inset}
+  /* 等級卡 */
+  .levels{display:grid;gap:12px}
+  .lv{display:flex;align-items:center;gap:16px;width:100%;min-height:86px;border-radius:20px;padding:14px 18px;text-align:left;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+  .lv::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.08) 50%,transparent 60%);transform:translateX(-100%);transition:transform .6s}
+  .lv:hover::after{transform:translateX(100%)}
+  .lv svg{width:44px;height:44px;flex:none}
+  .lv b{display:block;font-family:"Noto Serif TC",serif;font-size:20px;letter-spacing:3px}
+  .lv span{font-size:13px;opacity:.85;letter-spacing:1px}
+  .lv1{background:var(--lv1)}.lv2{background:var(--lv2)}.lv3{background:var(--lv3);border-color:rgba(212,162,76,.5)}
+  .lv4{background:var(--lv4);border-color:rgba(200,16,46,.7);box-shadow:0 0 30px rgba(200,16,46,.35),0 10px 30px rgba(0,0,0,.5)}
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px}
+  .tog{width:54px;height:32px;border-radius:20px;background:rgba(255,255,255,.12);position:relative;flex:none;border:1px solid var(--line)}
+  .tog::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#e8d5cf;transition:left .2s}
+  .tog.on{background:linear-gradient(100deg,#8e0b25,#c8102e)}.tog.on::after{left:25px;background:#fff}
+  /* 遊戲中 */
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .icon-btn{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+  .icon-btn svg{width:20px;height:20px}
+  .topbar .t{flex:1;text-align:center;font-family:"Noto Serif TC",serif;font-size:18px;letter-spacing:2px}
+  .turn{text-align:center;font-family:"Noto Serif TC",serif;font-size:22px;margin:8px 0 14px;letter-spacing:2px}
+  .turn em{font-style:normal;color:var(--gold2)}
+  .heat{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin:0 0 6px}
+  .heat i{display:block;height:100%;background:linear-gradient(90deg,#e0587a,#c8102e,#f3c98b);width:0;transition:width .6s}
+  .dare{perspective:900px;margin:14px 0}
+  .dare .face{min-height:230px;border-radius:24px;padding:22px 20px;display:flex;flex-direction:column;justify-content:center;gap:12px;text-align:center;
+    background:var(--card);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 60px rgba(200,16,46,.2)}
+  .dare .face .ty{font-size:13px;letter-spacing:4px;color:var(--gold2)}
+  .dare .face .tx{font-family:"Noto Serif TC",serif;font-size:23px;line-height:1.55;letter-spacing:1px}
+  .dare .face .who{font-size:13px;color:var(--muted)}
+  .dare.flip .face{animation:flip .6s cubic-bezier(.2,.8,.3,1.15)}
+  @keyframes flip{from{transform:rotateY(90deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
+  .timer{font-family:"Noto Serif TC",serif;font-size:40px;color:var(--gold2);text-align:center;margin:4px 0}
+  .timer.go{animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.5}}
+  .choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+  .choice button{min-height:96px;border-radius:20px;font-family:"Noto Serif TC",serif;font-size:21px;letter-spacing:3px;border:1px solid var(--line)}
+  .choice .truth{background:linear-gradient(150deg,#2e1446,#6a2d7a)}
+  .choice .dareb{background:linear-gradient(150deg,#5e0718,#c8102e)}
+  .choice small{display:block;font-family:inherit;font-size:12px;letter-spacing:1px;opacity:.75;margin-top:4px}
+  /* 骰子 */
+  .dice{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+  .die{aspect-ratio:1;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;
+    background:linear-gradient(150deg,#f7e9e4,#e2c2b8);color:#3a0614;box-shadow:inset 0 -6px 0 rgba(0,0,0,.15),0 12px 30px rgba(0,0,0,.5)}
+  .die small{font-size:11px;letter-spacing:2px;color:#8e0b25}
+  .die b{font-family:"Noto Serif TC",serif;font-size:19px;line-height:1.3}
+  .die.roll{animation:roll .7s cubic-bezier(.3,.7,.4,1)}
+  .die:nth-child(2).roll{animation-duration:.85s}.die:nth-child(3).roll{animation-duration:1s}
+  @keyframes roll{0%{transform:rotate(0) translateY(0)}30%{transform:rotate(200deg) translateY(-30px) scale(.9)}60%{transform:rotate(330deg) translateY(4px)}100%{transform:rotate(360deg)}}
+  .sentence{text-align:center;font-family:"Noto Serif TC",serif;font-size:22px;line-height:1.6;min-height:70px;margin:6px 0 14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .chips button{min-height:40px;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);font-size:14px}
+  .chips button.on{background:linear-gradient(100deg,#8e0b25,#c8102e);color:#fff}
+  .hist{margin-top:16px;font-size:13px;color:var(--muted);line-height:1.9}
+  /* 測驗 */
+  .q{font-family:"Noto Serif TC",serif;font-size:22px;text-align:center;line-height:1.5;margin:12px 0 16px}
+  .opts{display:grid;gap:10px}
+  .opts button{min-height:54px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:17px;text-align:left;padding:12px 16px}
+  .opts button.mine{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset}
+  .opts button.right{background:linear-gradient(100deg,#155c3a,#1f8a55);border-color:transparent}
+  .opts button.wrong{background:linear-gradient(100deg,#5e0718,#a8122f);border-color:transparent}
+  .step{text-align:center;color:var(--gold2);font-size:13px;letter-spacing:3px}
+  .score{font-family:"Noto Serif TC",serif;font-size:64px;text-align:center;color:var(--gold2);margin:6px 0}
+  /* 表單 */
+  label.l{display:block;font-size:14px;color:var(--muted);margin:12px 0 6px}
+  input,select{width:100%;min-height:48px;font:inherit;font-size:16px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(10,2,6,.7);color:var(--ink)}
+  .mine-list .it{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.3);margin-top:8px;font-size:14px}
+  .mine-list .it span{flex:1;line-height:1.5}
+  .mine-list .it button{min-height:36px;padding:4px 12px;border-radius:10px;background:rgba(255,255,255,.08);font-size:13px}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(212,162,76,.2);color:var(--gold2);margin-right:6px}
+  /* 底部導覽 */
+  nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-b) + 12px);width:calc(100% - 24px);max-width:500px;display:flex;
+    background:rgba(30,5,12,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:26px;padding:6px;z-index:20;
+    box-shadow:0 12px 40px rgba(0,0,0,.6)}
+  nav button{flex:1;min-height:56px;border-radius:20px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:12px;letter-spacing:1px}
+  nav button svg{width:24px;height:24px}
+  nav button.on{background:linear-gradient(150deg,rgba(200,16,46,.55),rgba(142,11,37,.55));color:#fff}
+  .view{display:none}.view.show{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  #gate{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,#4a0b1c,#0b0205 80%)}
+  #gate.show{display:flex}
+  #musicFab{position:fixed;right:16px;bottom:calc(var(--safe-b) + 92px);z-index:25;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid var(--line);font-size:17px}
+  #toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 96px);transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid var(--line);padding:10px 16px;border-radius:14px;
+    font-size:14px;z-index:30;display:none;max-width:90%;text-align:center}
+  .safe{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px;color:var(--muted);margin-top:14px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="toast" role="status" aria-live="polite"></div>
+<button id="musicFab" aria-label="音樂開關"></button>
+
+<!-- 18+ 確認 -->
+<div id="gate"><div class="panel" style="max-width:420px">
+  <h1>夜色挑戰</h1>
+  <p class="tagline">只屬於你們兩個人的夜晚</p>
+  <p class="muted">這裡有成人向的親密挑戰。開始前請確認：</p>
+  <p class="muted">・兩個人都已滿 18 歲<br>・每一個挑戰都是雙方願意的，任何人說停就停<br>・視訊時不截圖、不錄影</p>
+  <button class="btn" id="gateOk">我們都同意，開始吧</button>
+</div></div>
+
+<main>
+  <!-- 挑戰 -->
+  <section class="view show" id="v-dare">
+    <div id="dareHome">
+      <h1>夜色挑戰</h1>
+      <p class="tagline">真心話或大冒險，一張一張慢慢升溫</p>
+      <div class="seg" id="modeSeg" role="tablist" aria-label="玩的方式"></div>
+      <p class="muted" id="modeHint" style="text-align:center;margin:8px 0 14px"></p>
+      <div class="levels" id="levelList"></div>
+      <div class="switch"><span>混入我們的自訂挑戰<br><span class="muted" id="customCount"></span></span><button class="tog" id="customTog" aria-label="混入自訂挑戰"></button></div>
+    </div>
+    <div id="dareGame" style="display:none">
+      <div class="topbar">
+        <button class="icon-btn" id="dareBack" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="t" id="dareLvTitle"></div>
+        <button class="icon-btn" id="dareSwap" aria-label="換人"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></button>
+      </div>
+      <div class="heat" aria-hidden="true"><i id="heatBar"></i></div>
+      <div class="muted" style="text-align:center;font-size:12px" id="heatTxt"></div>
+      <div class="turn" id="turnTxt"></div>
+      <div class="choice" id="choiceBox">
+        <button class="truth" id="pickTruth">真心話<small>說出口</small></button>
+        <button class="dareb" id="pickDare">大冒險<small>做出來</small></button>
+      </div>
+      <div id="cardBox" style="display:none">
+        <div class="dare" id="dareCard"><div class="face"><div class="ty" id="cTy"></div><div class="tx" id="cTx"></div><div class="who" id="cWho"></div></div></div>
+        <div class="timer" id="cTimer" style="display:none"></div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn ghost" id="cSkip">換一張</button>
+          <button class="btn" id="cDone">完成了</button>
+        </div>
+      </div>
+      <div class="safe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg><span id="safeTxt"></span></div>
+    </div>
+  </section>
+
+  <!-- 骰子 -->
+  <section class="view" id="v-dice">
+    <h1>愛的骰子</h1>
+    <p class="tagline">搖一下，照著做</p>
+    <div class="seg" id="diceMode" style="margin-bottom:12px"></div>
+    <div class="chips" id="diceLv"></div>
+    <div class="dice" id="diceBox">
+      <div class="die"><small>動作</small><b id="d1">？</b></div>
+      <div class="die"><small>部位</small><b id="d2">？</b></div>
+      <div class="die"><small>方式</small><b id="d3">？</b></div>
+    </div>
+    <div class="sentence" id="diceSentence">輪到誰，就搖誰</div>
+    <button class="btn" id="rollBtn">搖骰子</button>
+    <div class="hist" id="diceHist"></div>
+  </section>
+
+  <!-- 測驗 -->
+  <section class="view" id="v-quiz">
+    <div id="quizHome">
+      <h1>默契測驗</h1>
+      <p class="tagline">你真的懂對方嗎？</p>
+      <div class="panel">
+        <p class="muted" style="margin-top:0">玩法：回答者先<b>偷偷</b>選自己的答案，再讓對方用說的猜。猜錯的人，要接受一個大冒險。<br>面對面就輪流拿手機；視訊就由拿手機的人出題。</p>
+        <label class="l">猜錯要接受的大冒險等級</label>
+        <div class="chips" id="quizLv"></div>
+        <div style="height:14px"></div>
+        <button class="btn" id="quizStart">開始 10 題</button>
+      </div>
+    </div>
+    <div id="quizGame" style="display:none">
+      <div class="topbar">
+        <button class="icon-btn" id="quizBack" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="t" id="quizStep"></div><span style="width:44px"></span>
+      </div>
+      <div class="step" id="quizPhase"></div>
+      <div class="q" id="quizQ"></div>
+      <div class="opts" id="quizOpts"></div>
+      <div id="quizAfter" style="display:none;margin-top:14px">
+        <div class="dare" id="quizPenalty" style="display:none"><div class="face" style="min-height:150px"><div class="ty">猜錯了・大冒險</div><div class="tx" id="qpTx"></div></div></div>
+        <button class="btn" id="quizNext">下一題</button>
+      </div>
+    </div>
+    <div id="quizEnd" style="display:none;text-align:center">
+      <h1>默契指數</h1>
+      <div class="score" id="quizScore"></div>
+      <p class="tagline" id="quizMsg"></p>
+      <button class="btn" id="quizAgain">再玩一次</button>
+    </div>
+  </section>
+
+  <!-- 對決 -->
+  <section class="view" id="v-duel">
+    <h1>心跳對決</h1>
+    <p class="tagline">遠距離也能 PK，輸的人受罰</p>
+    <div class="panel">
+      <p class="muted" style="margin-top:0">兩支手機連線，每回合玩一種小遊戲（跑酷、疊塔、節拍、接愛心、快槍手），輸的人抽懲罰卡、脫衣服、兌現賭注。</p>
+      <a href="index.html" class="btn" style="text-align:center;text-decoration:none;line-height:26px">進入心跳對決</a>
+    </div>
+  </section>
+
+  <!-- 我的 -->
+  <section class="view" id="v-me">
+    <h1>我們的設定</h1>
+    <div class="panel">
+      <div class="row">
+        <div><label class="l" for="n1">我</label><input id="n1" maxlength="8"></div>
+        <div><label class="l" for="n2">對方</label><input id="n2" maxlength="8"></div>
+      </div>
+      <label class="l" for="safeWord">安全詞（任何人說出來就立刻停）</label>
+      <input id="safeWord" maxlength="10" placeholder="例如：鳳梨">
+      <label class="l">每局可以換幾張卡</label>
+      <div class="seg" id="skipSeg"></div>
+    </div>
+    <h2>個性化挑戰</h2>
+    <div class="panel">
+      <p class="muted" style="margin-top:0">寫你們自己的真心話或大冒險，打開「混入自訂挑戰」就會出現在對應的等級裡。</p>
+      <label class="l">等級</label><div class="seg" id="cLv"></div>
+      <label class="l">類型</label><div class="seg" id="cTyp"></div>
+      <label class="l">適用</label><div class="seg" id="cMode"></div>
+      <label class="l" for="cText">內容</label>
+      <input id="cText" maxlength="60" placeholder="寫下挑戰…">
+      <div style="height:12px"></div>
+      <button class="btn" id="cAdd">加入</button>
+      <div class="mine-list" id="cList"></div>
+    </div>
+    <div style="height:14px"></div>
+    <div class="row"><button class="btn ghost" id="musicBtn"></button><button class="btn ghost" id="soundBtn"></button></div>
+  </section>
+</main>
+
+<nav aria-label="主選單">
+  <button data-v="dare" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="11" height="16" rx="2" transform="rotate(-8 9 11)"/><path d="M10 9.5c.8-1.2 2.6-.8 2.6.6 0 1.4-2.6 3-2.6 3s-2.6-1.6-2.6-3c0-1.4 1.8-1.8 2.6-.6z" fill="currentColor" stroke="none"/><path d="M17 6l3 1-3 13"/></svg>挑戰</button>
+  <button data-v="dice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="16" cy="16" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="16" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="16" r="1.4" fill="currentColor"/></svg>骰子</button>
+  <button data-v="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/><path d="M10 9a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.5M12 14h.01"/></svg>測驗</button>
+  <button data-v="duel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M12 7.5L10.5 11h3L12 14.5"/></svg>對決</button>
+  <button data-v="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>我們</button>
+</nav>
+
+<script>
+// ================= 內容 =================
+// 卡片格式：[文字, 秒數(0=不計時), 適用：'b'兩種都可 / 'm'見面 / 'r'視訊]
+const LEVELS = [
+  { name: '溫和', sub: '熱身・甜甜的開始', cls: 'lv1' },
+  { name: '熱辣', sub: '升溫・開始心跳加速', cls: 'lv2' },
+  { name: '猛烈', sub: '加深・把距離拉近', cls: 'lv3' },
+  { name: '極限', sub: '突破・今晚不設限', cls: 'lv4' },
+];
+const DECK = [
+  { truth: [
+      ['第一次見到我的時候，你心裡在想什麼？', 0, 'b'], ['我身上哪個地方最吸引你？', 0, 'b'], ['我們哪一次約會讓你最難忘？為什麼？', 0, 'b'],
+      ['什麼時候最想抱我？', 0, 'b'], ['我做什麼小動作會讓你心動？', 0, 'b'], ['我穿什麼的時候你最喜歡？', 0, 'b'],
+      ['說一個你從沒告訴過我的小秘密', 0, 'b'], ['你覺得自己最性感的地方是哪裡？', 0, 'b'], ['我們第一次接吻，你給自己打幾分？', 0, 'b'],
+      ['你最想跟我一起完成的一件事？', 0, 'b'],
+    ], dare: [
+      ['盯著對方的眼睛，不准笑', 30, 'b'], ['給對方一個長長的擁抱', 15, 'm'], ['抱著枕頭假裝是對方，說一句情話', 0, 'r'],
+      ['輕輕親一下對方的額頭', 0, 'm'], ['用三個詞形容對方今晚的樣子', 0, 'b'], ['幫對方按摩肩膀', 60, 'm'],
+      ['對著鏡頭送一個有聲音的飛吻', 0, 'r'], ['用最溫柔的聲音說「今晚只想陪你」', 0, 'b'], ['牽著對方的手，說出最喜歡對方的三件事', 0, 'm'],
+      ['模仿對方撒嬌的樣子', 0, 'b'], ['清唱一句情歌給對方聽', 0, 'b'], ['對方說一個字，你用它即興說一句情話', 0, 'b'],
+    ] },
+  { truth: [
+      ['你最喜歡我親你哪裡？', 0, 'b'], ['最讓你心跳加速的一次親密時刻是什麼？', 0, 'b'], ['你覺得我身上最敏感的地方在哪？', 0, 'b'],
+      ['有沒有偷偷幻想過我們在哪裡親熱？', 0, 'b'], ['你喜歡溫柔一點的我，還是強勢一點的我？', 0, 'b'], ['我做什麼最能讓你瞬間有感覺？', 0, 'b'],
+      ['你最喜歡我穿什麼睡覺？', 0, 'b'], ['想到我的時候，第一個浮現的畫面是什麼？', 0, 'b'], ['有沒有一件事想試、但一直不好意思說？', 0, 'b'],
+      ['你覺得接吻多久最剛好？', 0, 'b'],
+    ], dare: [
+      ['親吻對方的脖子', 10, 'm'], ['貼在對方耳邊吹氣，說一句悄悄話', 0, 'm'], ['坐到對方腿上，看著對方的眼睛', 60, 'm'],
+      ['用指尖慢慢沿著對方的手臂往上滑', 0, 'm'], ['給對方一個長長的吻', 20, 'm'], ['脫掉一件衣服', 0, 'b'],
+      ['用最撩的聲音叫對方的名字三次', 0, 'b'], ['對著鏡頭慢慢撥頭髮、咬嘴唇', 10, 'r'], ['把鏡頭從臉慢慢移到鎖骨', 0, 'r'],
+      ['讓對方選一首歌，跟著跳一段性感的舞', 30, 'b'], ['蒙上眼睛，猜對方親的是哪裡', 0, 'm'], ['用一句話說出今晚最想對對方做的事', 0, 'b'],
+    ] },
+  { truth: [
+      ['我們做過的哪一次讓你最難忘？為什麼？', 0, 'b'], ['你最大的幻想是什麼？', 0, 'b'], ['你喜歡什麼樣的前戲？', 0, 'b'],
+      ['你最喜歡哪一種姿勢？', 0, 'b'], ['有沒有想在什麼特別的地方試試看？', 0, 'b'], ['我哪裡可以做得更好？誠實說', 0, 'b'],
+      ['你喜歡我主動，還是被我引導？', 0, 'b'], ['最想看我穿什麼，或什麼都不穿？', 0, 'b'], ['依序說出你最敏感的三個地方', 0, 'b'],
+      ['一個人的時候會想我嗎？都想些什麼？', 0, 'b'],
+    ], dare: [
+      ['只用嘴，幫對方脫掉一件衣服', 0, 'm'], ['親吻對方的大腿內側', 10, 'm'], ['蒙住對方的眼睛，用任何方式挑逗', 60, 'm'],
+      ['用舌尖沿著對方的鎖骨輕輕畫一條線', 0, 'm'], ['脫掉兩件衣服', 0, 'b'], ['讓對方指定一個部位，親吻它', 15, 'm'],
+      ['在鏡頭前慢慢脫掉一件，全程看著鏡頭', 0, 'r'], ['用最性感的聲音，說出你現在想對我做的事', 0, 'r'], ['跨坐在對方身上，不准動', 60, 'm'],
+      ['用冰塊或冰飲料，輕輕滑過對方的脖子', 0, 'm'], ['鏡頭特寫對方指定的部位', 10, 'r'], ['幫對方按摩對方指定的部位', 120, 'm'],
+    ] },
+  { truth: [
+      ['說出一個你從沒告訴過我的幻想', 0, 'b'], ['你最想被我怎麼對待？說具體一點', 0, 'b'], ['如果今晚完全聽你的，你會怎麼安排？', 0, 'b'],
+      ['我們還有什麼沒試過、但一定要試的？', 0, 'b'], ['什麼話從我嘴裡說出來，會讓你最受不了？', 0, 'b'], ['你最喜歡我發出什麼樣的聲音？', 0, 'b'],
+    ], dare: [
+      ['接下來的時間，主導權全部交給對方', 300, 'b'], ['只穿內衣（或什麼都不穿）進行下一輪', 0, 'b'], ['用領帶或圍巾輕輕綁住對方的手，盡情挑逗', 120, 'm'],
+      ['用嘴巴探索對方的身體，直到對方喊停', 0, 'm'], ['一件一件幫對方脫掉，每脫一件就親一下', 0, 'm'], ['照對方的指令做，不准拒絕', 180, 'r'],
+      ['在鏡頭前，把剩下的衣服全部脫掉', 0, 'r'], ['用最慢的速度，從脖子一路吻到肚子', 0, 'm'], ['由對方指定一個姿勢，維持住', 60, 'b'],
+      ['說出今晚的「最後一關」，兩個人一起完成', 0, 'b'],
+    ] },
+];
+// 骰子：每升一級，詞庫往上疊加。面對面＝對對方做；視訊＝對著鏡頭對自己做給對方看
+const DICE = {
+  m: {
+    act: [['親吻', '輕吻', '撫摸', '按摩', '摟著磨蹭', '用鼻尖蹭'], ['輕咬', '舔', '吹氣', '用嘴唇蹭', '輕抓'], ['吸吮', '用舌尖畫圈', '一路吻遍', '用牙齒輕拉'], ['用冰塊劃過', '用嘴挑逗', '用熱呼吸逗弄', '想怎麼弄就怎麼弄']],
+    part: [['臉頰', '手指', '肩膀', '後頸', '手腕'], ['嘴唇', '脖子', '耳垂', '鎖骨', '腰側'], ['背脊', '小腹', '大腿', '大腿內側', '臀部'], ['胸口', '對方最敏感的地方', '對方指定的地方']],
+    how: [['10 秒', '30 秒', '慢慢地', '用最輕的力道'], ['1 分鐘', '閉著眼睛', '邊做邊說情話', '對方不准出聲'], ['直到對方喊停', '蒙住對方的眼睛', '對方不准動', '用最慢的速度'], ['綁住對方的手', '不准停，3 分鐘', '對方求饒才停', '邊做邊脫掉一件']],
+  },
+  r: {
+    act: [['撫摸', '輕撫', '慢慢滑過'], ['用指尖畫圈', '輕捏', '慢慢揉', '輕抓'], ['用冰塊劃過', '特寫', '一邊脫衣服一邊撫摸'], ['照對方的口令撫摸', '想像是對方在碰，撫摸']],
+    part: [['嘴唇', '脖子', '肩膀', '手臂'], ['耳垂', '鎖骨', '腰側', '肚子'], ['大腿', '大腿內側', '背', '臀部'], ['胸口', '對方指定的地方', '自己最敏感的地方']],
+    how: [['看著鏡頭', '10 秒', '30 秒'], ['邊做邊叫對方的名字', '閉上眼睛', '咬著嘴唇', '1 分鐘'], ['照對方說的節奏', '只穿內衣', '關燈只留一盞', '直到對方喊停'], ['邊做邊說你想要什麼', '全身入鏡，3 分鐘', '對方說停才停', '先脫一件再開始']],
+  },
+};
+const QUIZ = [
+  ['我最喜歡的約會方式？', ['在家耍廢', '出去吃好料', '一起旅行', '看電影']], ['我最喜歡被親哪裡？', ['嘴唇', '脖子', '耳朵', '額頭']],
+  ['我最喜歡你穿什麼？', ['襯衫', '運動服', '睡衣', '什麼都不穿']], ['我最容易被什麼撩到？', ['眼神', '聲音', '擁抱', '突然的吻']],
+  ['親熱的時候我比較喜歡？', ['溫柔慢慢來', '熱情直接', '被你主導', '主導你']], ['我最有感覺的時段？', ['早上剛起床', '午後', '晚上', '半夜']],
+  ['我覺得最浪漫的事？', ['手寫情書', '驚喜禮物', '一起做飯', '長長的擁抱']], ['吵架後我最希望你？', ['馬上抱我', '給我空間', '認真道歉', '逗我笑']],
+  ['我最敏感的地方？', ['耳朵', '脖子', '腰', '大腿']], ['如果今晚只能選一個？', ['一起泡澡', '幫我按摩', '看電影抱抱', '直接上床']],
+  ['我最想跟你去哪旅行？', ['海島', '日本', '歐洲', '山上小木屋']], ['我比較喜歡你？', ['主動撩我', '被我撩', '跟我鬥嘴', '安靜陪著我']],
+  ['我最喜歡哪一種吻？', ['輕輕啄一下', '深吻', '邊笑邊親', '偷襲的吻']], ['在家我最常穿？', ['T 恤短褲', '睡衣', '你的衣服', '很少穿']],
+  ['我最喜歡你叫我？', ['寶貝', '我的名字', '老公／老婆', '專屬小名']], ['我心中最完美的週末早上？', ['睡到自然醒', '一起吃早午餐', '賴床抱抱', '一起運動']],
+  ['什麼燈光最有感覺？', ['全暗', '一盞小燈', '蠟燭', '開著燈']], ['我最想試的新花樣？', ['角色扮演', '換個地方', '蒙眼', '一起泡澡']],
+];
+
+// ================= 存檔 =================
+const KEY = 'night-challenge-v1';
+let S = { music: true, consent: false, names: ['我', '寶貝'], mode: 'm', useCustom: true, custom: [], skips: 3, safe: '', sound: true, diceLv: 1, quizLv: 1 };
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function toast(m, ms = 2000) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms); }
+
+// ================= 音效 =================
+let ac = null;
+function tone(f0, f1, d, type = 'triangle', v = .06) {
+  if (!S.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + .02);
+  } catch (e) {}
+}
+// ================= 背景音樂（即時合成）=================
+// lounge：慵懶 R&B；slow：更慢更低、像心跳的大鼓（猛烈、極限用）
+const PROG = [[57, 60, 64, 67, 71], [53, 57, 60, 64], [50, 53, 57, 60, 64], [52, 56, 59, 62, 65]];
+const MMODES = {
+  lounge: { bpm: 76, cut: 1300, ep: '....x.....x...x.', bass: 'x......x..x.....', kick: 'x......x..x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.x.' },
+  slow:   { bpm: 64, cut: 850,  ep: '........x.......', bass: 'x.......x.......', kick: 'x..x............', snare: '', hat: '' },
+};
+const midiHz = n => 440 * Math.pow(2, (n - 69) / 12);
+const Music = {
+  out: null, noise: null, mode: null, bpm: 76, step: 0, nextT: 0,
+  ensure() {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      if (this.out) return;
+      this.out = ac.createGain(); this.out.gain.value = S.music ? .22 : 0;
+      this.out.connect(ac.createDynamicsCompressor()).connect(ac.destination);
+      const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      this.noise = b; setInterval(() => this.tick(), 25);
+    } catch (e) {}
+  },
+  volume() { if (this.out) this.out.gain.setTargetAtTime(S.music ? .22 : 0, ac.currentTime, .1); },
+  set(mode) { if (!this.out || mode === this.mode) return; this.mode = mode; this.bpm = MMODES[mode].bpm; this.step = 0; this.nextT = ac.currentTime + .08; },
+  tick() {
+    if (!this.mode || !S.music) return;
+    const spb = 60 / this.bpm / 4;
+    while (this.nextT < ac.currentTime + .15) { this.play(this.step, this.nextT, spb); this.nextT += spb; this.step++; }
+  },
+  play(s, t, spb) {
+    const m = MMODES[this.mode], i = s % 16, ch = PROG[Math.floor(s / 16) % 4], hit = p => p && p[i] === 'x';
+    if (i === 0) this.pad(ch, t, spb * 16, m.cut);
+    if (hit(m.ep)) this.ep(ch, t);
+    if (hit(m.bass)) this.bass(ch[0] - 24, t, spb * 3);
+    if (hit(m.kick)) this.kick(t);
+    if (hit(m.snare)) this.noiseHit(t, 'bandpass', 1800, .2, .16);
+    if (hit(m.hat)) this.noiseHit(t, 'highpass', 7500, i % 4 === 2 ? .05 : .025, .04);
+  },
+  env(t, peak, a, d) { const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); g.connect(this.out); return g; },
+  pad(ch, t, dur, cut) {
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cut; f.connect(this.env(t, .05, .6, dur));
+    for (const n of ch) for (const det of [-7, 7]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midiHz(n); o.detune.value = det; o.connect(f); o.start(t); o.stop(t + dur + 1); }
+  },
+  ep(ch, t) { const g = this.env(t, .07, .01, .7); for (const n of ch.slice(1)) { const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = midiHz(n + 12); o.connect(g); o.start(t); o.stop(t + .8); } },
+  bass(n, t, len) {
+    const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420; f.connect(this.env(t, .32, .01, len + .15));
+    for (const ty of ['sine', 'triangle']) { const o = ac.createOscillator(); o.type = ty; o.frequency.value = midiHz(n); o.connect(f); o.start(t); o.stop(t + len + .3); }
+  },
+  kick(t) { const o = ac.createOscillator(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + .14); o.connect(this.env(t, .7, .003, .28)); o.start(t); o.stop(t + .35); },
+  noiseHit(t, type, freq, peak, d) {
+    const n = ac.createBufferSource(); n.buffer = this.noise; const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+    n.connect(f).connect(this.env(t, peak, .002, d)); n.start(t, Math.random() * .5); n.stop(t + d + .05);
+  },
+};
+// 進到猛烈、極限的挑戰就換慢板
+const updateMusic = () => Music.set(D && D.lv >= 2 ? 'slow' : 'lounge');
+const unlock = () => { if (!Music.out) { Music.ensure(); updateMusic(); } };
+addEventListener('pointerdown', unlock, { capture: true });
+addEventListener('keydown', unlock, { capture: true });
+const sfx = { flip: () => { tone(300, 900, .12); setTimeout(() => tone(900, 1300, .1), 90); }, done: () => { tone(660, 990, .12); setTimeout(() => tone(990, 1320, .18), 110); },
+  roll: () => { for (let i = 0; i < 6; i++) setTimeout(() => tone(200 + Math.random() * 300, 120, .05, 'square', .03), i * 70); }, tick: () => tone(1200, 1200, .03, 'square', .03),
+  wrong: () => tone(300, 120, .3, 'sawtooth', .05), right: () => { tone(784, 784, .1); setTimeout(() => tone(1046, 1046, .2), 100); } };
+
+// ================= 圖示 =================
+const LV_ICON = [
+  '<svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2.6"><path d="M24 40S8 30.5 8 19a8 8 0 0 1 16-2 8 8 0 0 1 16 2c0 11.5-16 21-16 21z"/></svg>',
+  '<svg viewBox="0 0 48 48"><path d="M24 41S7 31 7 19.5a8.5 8.5 0 0 1 17-2.2 8.5 8.5 0 0 1 17 2.2C41 31 24 41 24 41z" fill="#fff"/><path d="M24 33c-4 0-6-3-6-6 0-4 4-6 4-10 3 2 5 5 5 8 1-1 2-2 2-4 2 2 1 12-5 12z" fill="#c8102e"/></svg>',
+  '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#fff"/><path d="M24 36S13 29.5 13 21.8a5.8 5.8 0 0 1 11-2.6 5.8 5.8 0 0 1 11 2.6C35 29.5 24 36 24 36z" fill="#5e0718"/><path d="M24 36v6" stroke="#5e0718" stroke-width="2.4"/></svg>',
+  '<svg viewBox="0 0 48 48"><path d="M24 42S6 31 6 18.5a9 9 0 0 1 18-2.4 9 9 0 0 1 18 2.4C42 31 24 42 24 42z" fill="#fff"/><path d="M10 28l4-5 3 6 4-9 3 8 4-11 3 9 4-6 3 7" stroke="#0a0105" stroke-width="2.2" fill="none"/></svg>',
+];
+
+// ================= 導覽 =================
+function go(v) {
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('show', s.id === 'v-' + v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  scrollTo(0, 0);
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+function seg(el, opts, cur, onPick) {
+  el.innerHTML = '';
+  for (const [k, label] of opts) { const b = document.createElement('button'); b.textContent = label; b.className = k === cur ? 'on' : ''; b.onclick = () => onPick(k); el.appendChild(b); }
+}
+function chips(el, cur, onPick) {
+  el.innerHTML = '';
+  LEVELS.forEach((l, i) => { const b = document.createElement('button'); b.textContent = l.name; b.className = i === cur ? 'on' : ''; b.onclick = () => onPick(i); el.appendChild(b); });
+}
+
+// ================= 挑戰 =================
+const MODES = [['m', '面對面'], ['r', '視訊遠距']];
+function renderDareHome() {
+  seg($('modeSeg'), MODES, S.mode, k => { S.mode = k; save(); renderDareHome(); });
+  $('modeHint').textContent = S.mode === 'm' ? '兩個人在一起，輪流拿手機抽卡' : '各自拿手機開視訊，抽到的挑戰都能隔著螢幕做';
+  $('levelList').innerHTML = LEVELS.map((l, i) => `<button class="lv ${l.cls}" data-i="${i}">${LV_ICON[i]}<div><b>${l.name}</b><span>${l.sub}</span></div></button>`).join('');
+  $('levelList').querySelectorAll('.lv').forEach(b => b.onclick = () => startDare(+b.dataset.i));
+  $('customTog').classList.toggle('on', S.useCustom);
+  $('customCount').textContent = `目前寫了 ${S.custom.length} 張`;
+}
+$('customTog').onclick = () => { S.useCustom = !S.useCustom; save(); renderDareHome(); };
+
+let D = null;   // 一局：{lv, turn, done, skips, used, card, timer}
+function startDare(lv) {
+  D = { lv, turn: 0, done: 0, skips: S.skips, used: new Set(), card: null, timer: null };
+  $('dareHome').style.display = 'none'; $('dareGame').style.display = 'block';
+  renderTurn(); updateMusic();
+}
+function deckFor(lv, ty) {
+  const base = DECK[lv][ty].filter(c => c[2] === 'b' || c[2] === S.mode).map(c => ({ tx: c[0], t: c[1] }));
+  const mine = S.useCustom ? S.custom.filter(c => c.lv === lv && c.ty === ty && (c.mode === 'b' || c.mode === S.mode)).map(c => ({ tx: c.tx, t: 0, mine: true })) : [];
+  return [...base, ...mine];
+}
+function renderTurn() {
+  clearInterval(D.timer);
+  const L = LEVELS[D.lv];
+  $('dareLvTitle').textContent = L.name + '・' + (S.mode === 'm' ? '面對面' : '視訊');
+  $('turnTxt').innerHTML = `輪到 <em>${esc(S.names[D.turn])}</em>`;
+  $('choiceBox').style.display = ''; $('cardBox').style.display = 'none';
+  const heat = Math.min(100, D.done * 12.5);
+  $('heatBar').style.width = heat + '%';
+  $('heatTxt').textContent = D.done ? `已完成 ${D.done} 個挑戰・剩 ${D.skips} 次換卡` : `每局可換 ${D.skips} 次卡`;
+  $('safeTxt').textContent = S.safe ? `安全詞「${S.safe}」：說出來就立刻停` : '任何人說停就停，到「我們」頁可以設定安全詞';
+}
+function draw(ty) {
+  const deck = deckFor(D.lv, ty);
+  let pool = deck.filter(c => !D.used.has(c.tx));
+  if (!pool.length) { deck.forEach(c => D.used.delete(c.tx)); pool = deck; }
+  const c = pick(pool); D.used.add(c.tx); D.card = { ...c, ty };
+  $('cTy').textContent = (ty === 'truth' ? '真心話' : '大冒險') + (c.mine ? '・我們寫的' : '');
+  $('cTx').textContent = c.tx;
+  $('cWho').textContent = `${S.names[D.turn]} 執行`;
+  $('choiceBox').style.display = 'none'; $('cardBox').style.display = 'block';
+  const card = $('dareCard'); card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
+  $('cSkip').disabled = D.skips <= 0; $('cSkip').textContent = `換一張（${D.skips}）`;
+  clearInterval(D.timer);
+  const tm = $('cTimer');
+  if (c.t) {
+    tm.style.display = 'block'; tm.className = 'timer'; tm.textContent = fmt(c.t);
+    $('cDone').textContent = '開始計時';
+  } else { tm.style.display = 'none'; $('cDone').textContent = '完成了'; }
+  sfx.flip();
+}
+const fmt = s => s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s} 秒`;
+$('pickTruth').onclick = () => draw('truth');
+$('pickDare').onclick = () => draw('dare');
+$('cSkip').onclick = () => { if (D.skips <= 0) return; D.skips--; draw(D.card.ty); };
+$('cDone').onclick = () => {
+  const tm = $('cTimer');
+  if (D.card.t && !D.timer) {   // 第一次按＝開始倒數
+    let left = D.card.t; tm.className = 'timer go'; $('cDone').textContent = '提早完成';
+    D.timer = setInterval(() => { left--; tm.textContent = fmt(Math.max(0, left)); if (left <= 3 && left > 0) sfx.tick(); if (left <= 0) { clearInterval(D.timer); finishCard(); } }, 1000);
+    return;
+  }
+  finishCard();
+};
+function finishCard() {
+  clearInterval(D.timer); D.timer = null;
+  D.done++; D.turn = 1 - D.turn; sfx.done();
+  if (D.done % 8 === 0 && D.lv < 3) toast(`已經熱起來了 🔥 要不要回上一頁升到「${LEVELS[D.lv + 1].name}」？`, 3500);
+  renderTurn();
+}
+$('dareSwap').onclick = () => { D.turn = 1 - D.turn; renderTurn(); };
+$('dareBack').onclick = () => { clearInterval(D.timer); D = null; updateMusic(); $('dareGame').style.display = 'none'; $('dareHome').style.display = ''; renderDareHome(); };
+
+// ================= 骰子 =================
+function stack(lists, lv) { return lists.slice(0, lv + 1).flat(); }
+function renderDice() {
+  seg($('diceMode'), MODES, S.mode, k => { S.mode = k; save(); renderDice(); renderDareHome(); $('diceSentence').textContent = k === 'm' ? '輪到誰，就搖誰，對對方做' : '搖到的，對著鏡頭做給對方看'; });
+  chips($('diceLv'), S.diceLv, i => { S.diceLv = i; save(); renderDice(); });
+}
+let hist = [];
+$('rollBtn').onclick = () => {
+  const lv = S.diceLv, remote = S.mode === 'r', W = DICE[S.mode];
+  const a = pick(stack(W.act, lv)), p = pick(stack(W.part, lv)), h = pick(stack(W.how, lv));
+  document.querySelectorAll('.die').forEach(d => { d.classList.remove('roll'); void d.offsetWidth; d.classList.add('roll'); });
+  sfx.roll(); $('rollBtn').disabled = true;
+  let n = 0;
+  const spin = setInterval(() => {
+    $('d1').textContent = pick(stack(W.act, lv)); $('d2').textContent = pick(stack(W.part, lv)); $('d3').textContent = pick(stack(W.how, lv));
+    if (++n > 9) {
+      clearInterval(spin);
+      $('d1').textContent = a; $('d2').textContent = p; $('d3').textContent = h;
+      const own = /^(對方|自己)/.test(p) ? '' : remote ? '自己的' : '對方的';
+      const line = remote ? `對著鏡頭，${a}${own}${p}・${h}` : `${a}${own}${p}・${h}`;
+      $('diceSentence').textContent = line; $('rollBtn').disabled = false; sfx.done();
+      hist.unshift(line); hist = hist.slice(0, 5);
+      $('diceHist').innerHTML = hist.length > 1 ? '剛剛搖到：<br>' + hist.slice(1).map(esc).join('<br>') : '';
+    }
+  }, 75);
+};
+
+// ================= 測驗 =================
+let Q = null;
+function renderQuizHome() { chips($('quizLv'), S.quizLv, i => { S.quizLv = i; save(); renderQuizHome(); }); }
+$('quizStart').onclick = () => {
+  const qs = [...QUIZ].sort(() => Math.random() - .5).slice(0, 10);
+  Q = { qs, i: 0, right: 0, answerer: 0, phase: 'pick', mine: null };
+  $('quizHome').style.display = 'none'; $('quizEnd').style.display = 'none'; $('quizGame').style.display = 'block';
+  renderQ();
+};
+function renderQ() {
+  const [q, opts] = Q.qs[Q.i], a = S.names[Q.answerer], g = S.names[1 - Q.answerer];
+  $('quizStep').textContent = `第 ${Q.i + 1} / 10 題`;
+  $('quizQ').textContent = q.replace(/^我/, a + ' ').replace(/你/g, g);
+  $('quizPhase').textContent = Q.phase === 'pick' ? `① ${a} 偷偷選自己的答案（別讓 ${g} 看）` : Q.phase === 'guess' ? `② ${g} 用說的猜，${a} 點下對方猜的答案` : '';
+  $('quizOpts').innerHTML = opts.map((o, k) => {
+    let cls = '';
+    if (Q.phase === 'reveal') cls = k === Q.mine ? 'right' : (k === Q.guess ? 'wrong' : '');
+    return `<button class="${cls}" data-k="${k}">${esc(o)}</button>`;
+  }).join('');
+  $('quizOpts').querySelectorAll('button').forEach(b => b.onclick = () => answer(+b.dataset.k));
+  $('quizAfter').style.display = Q.phase === 'reveal' ? 'block' : 'none';
+}
+function answer(k) {
+  if (Q.phase === 'pick') { Q.mine = k; Q.phase = 'guess'; tone(500, 700, .08); return renderQ(); }
+  if (Q.phase !== 'guess') return;
+  Q.guess = k; Q.phase = 'reveal';
+  const ok = k === Q.mine;
+  if (ok) { Q.right++; sfx.right(); $('quizPenalty').style.display = 'none'; }
+  else {
+    sfx.wrong();
+    const c = pick(deckFor(S.quizLv, 'dare'));
+    $('qpTx').textContent = `${S.names[1 - Q.answerer]}：${c.tx}${c.t ? `（${fmt(c.t)}）` : ''}`;
+    $('quizPenalty').style.display = 'block';
+    const card = $('quizPenalty'); card.classList.remove('flip'); void card.offsetWidth; card.classList.add('flip');
+  }
+  $('quizNext').textContent = Q.i === 9 ? '看結果' : '下一題';
+  renderQ();
+}
+$('quizNext').onclick = () => {
+  if (Q.i === 9) return endQuiz();
+  Q.i++; Q.answerer = 1 - Q.answerer; Q.phase = 'pick'; Q.mine = null; Q.guess = null; renderQ();
+};
+function endQuiz() {
+  const pct = Q.right * 10;
+  $('quizGame').style.display = 'none'; $('quizEnd').style.display = 'block';
+  $('quizScore').textContent = pct + '%';
+  $('quizMsg').textContent = pct >= 90 ? '天生一對，連心跳都同步' : pct >= 70 ? '很懂對方，再多一點點就完美' : pct >= 40 ? '還有好多祕密可以慢慢挖掘' : '今晚好好重新認識彼此吧 😏';
+  sfx.done();
+}
+$('quizAgain').onclick = () => { $('quizEnd').style.display = 'none'; $('quizHome').style.display = ''; };
+$('quizBack').onclick = () => { $('quizGame').style.display = 'none'; $('quizHome').style.display = ''; };
+
+// ================= 我們 =================
+let cDraft = { lv: 1, ty: 'dare', mode: 'b' };
+function renderMe() {
+  $('n1').value = S.names[0]; $('n2').value = S.names[1]; $('safeWord').value = S.safe;
+  seg($('skipSeg'), [[0, '不能換'], [3, '3 次'], [5, '5 次'], [99, '不限']], S.skips, k => { S.skips = k; save(); renderMe(); });
+  seg($('cLv'), LEVELS.map((l, i) => [i, l.name]), cDraft.lv, k => { cDraft.lv = k; renderMe(); });
+  seg($('cTyp'), [['truth', '真心話'], ['dare', '大冒險']], cDraft.ty, k => { cDraft.ty = k; renderMe(); });
+  seg($('cMode'), [['b', '都可以'], ['m', '面對面'], ['r', '視訊']], cDraft.mode, k => { cDraft.mode = k; renderMe(); });
+  $('cList').innerHTML = S.custom.map((c, i) => `<div class="it"><span><span class="badge">${LEVELS[c.lv].name}・${c.ty === 'truth' ? '真心話' : '大冒險'}</span>${esc(c.tx)}</span><button data-i="${i}">刪除</button></div>`).join('');
+  $('cList').querySelectorAll('button').forEach(b => b.onclick = () => { S.custom.splice(+b.dataset.i, 1); save(); renderMe(); });
+  $('soundBtn').textContent = S.sound ? '🔔 音效：開' : '🔕 音效：關';
+  $('musicBtn').textContent = S.music ? '🎵 音樂：開' : '🎵 音樂：關';
+  $('musicFab').textContent = S.music ? '🎵' : '🔇';
+}
+for (const [id, k] of [['n1', 0], ['n2', 1]]) $(id).addEventListener('input', e => { S.names[k] = e.target.value.trim() || (k ? '寶貝' : '我'); save(); });
+$('safeWord').addEventListener('input', e => { S.safe = e.target.value.trim(); save(); });
+$('cAdd').onclick = () => {
+  const tx = $('cText').value.trim();
+  if (!tx) return toast('先寫下內容');
+  S.custom.push({ ...cDraft, tx }); save(); $('cText').value = ''; renderMe(); toast('已加入，打開「混入自訂挑戰」就會抽到');
+};
+$('soundBtn').onclick = () => { S.sound = !S.sound; save(); renderMe(); };
+const toggleMusic = () => { S.music = !S.music; save(); Music.ensure(); Music.volume(); updateMusic(); renderMe(); toast(S.music ? '🎵 音樂開啟' : '🔇 音樂關閉', 1000); };
+$('musicBtn').onclick = toggleMusic;
+$('musicFab').onclick = e => { e.stopPropagation(); toggleMusic(); };
+
+// ================= 啟動 =================
+$('gateOk').onclick = () => { S.consent = true; save(); $('gate').classList.remove('show'); };
+if (!S.consent) $('gate').classList.add('show');
+renderDareHome(); renderDice(); renderQuizHome(); renderMe();
+if (location.hash === '#dice') go('dice');
+</script>
+</body>
+</html>
