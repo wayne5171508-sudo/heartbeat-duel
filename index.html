@@ -753,6 +753,7 @@ function guestJoin(code) {
   every(() => { if (!welcomed) join(); }, 1000);
   join();
   every(checkAlive, 2000);
+  every(() => send({ type: 'hb' }), 3000);   // 心跳：讓房主知道我還在（等候室、挑卡時本來不會送任何東西）
   guestOnMsg.welcome = () => { welcomed = true; };
   $('lobbyTitle').textContent = '連線中…'; $('codeBox').style.display = 'none'; $('hostSettings').style.display = 'none';
   show('lobby');
@@ -774,7 +775,7 @@ function guestOnMsg(m) {
 }
 function checkAlive() {
   if (!net) return;
-  if ((role === 'guest' || st && st.p.guest) && Date.now() - net.lastHeard > 9000) toast('對方好像斷線了…等一下或重新整理', 1900);
+  if ((role === 'guest' || st && st.p.guest) && Date.now() - net.lastHeard > 12000) toast('對方好像斷線了…等一下或重新整理', 1900);
 }
 
 // ---- 畫面渲染 ----
