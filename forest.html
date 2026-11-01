@@ -75,6 +75,13 @@ a.back { color:var(--dim); font-size:13px; text-align:center; text-decoration:no
 .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .pad button { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px; font-family:"Noto Serif TC",serif; }
 .pad svg { width:30px; height:30px; fill:#cfe; }
+@media (max-height:520px) {
+  .box { padding:14px 16px; gap:8px; max-height:96vh; }
+  .box h2 { font-size:20px; } .box .poem { font-size:13.5px; line-height:1.5; } .box ul { font-size:12.5px; line-height:1.5; }
+  .pad { grid-template-columns:repeat(6,1fr); } .pad svg { width:24px; height:24px; } .pad button { padding:5px; }
+  .slots div { width:44px; height:44px; } .gl svg { width:40px; height:40px; }
+  .box button { padding:9px 14px; }
+}
 #toast { position:fixed; left:50%; top:22%; transform:translateX(-50%); z-index:40; background:rgba(6,10,14,.88); border:1px solid var(--line); color:var(--ink); padding:10px 18px; border-radius:24px; font-size:14px; display:none; pointer-events:none; text-align:center; max-width:86vw; font-family:"Noto Serif TC",serif; }
 </style>
 </head>
@@ -266,10 +273,11 @@ function buildLevel(n) {
     return { ...t, id: t.t + k, i, x: i % W, y: Math.floor(i / W) };
   });
   const fires = [], shadowSpawns = [];
-  for (const [r, n] of Object.entries(spec.shadows)) {
-    const e = (ent[r] || [])[0]; if (e != null) fires.push({ x: e % W, y: Math.floor(e / W) });
+  for (const r of Object.keys(spec.shadows)) { const e = (ent[r] || [])[0]; if (e != null) fires.push({ x: e % W, y: Math.floor(e / W) }); }
+  const safeSpots = [...fires, ...things.filter(t => t.t === 'plate')];
+  for (let i = 0; i < W * H; i++) if (safeSpots.some(f => Math.hypot(f.x - i % W, f.y - Math.floor(i / W)) < 2.6)) used.add(i);
+  for (const [r, n] of Object.entries(spec.shadows))
     for (let k = 0; k < n; k++) { const i = place(r, .45, 1); shadowSpawns.push({ x: i % W, y: Math.floor(i / W), reg: r }); }
-  }
   const mush = [], trees = [];
   for (let i = 0; i < W * H; i++) {
     if (isFloor(i) && !used.has(i) && !linkAt[i] && R() < .045) mush.push({ x: i % W, y: Math.floor(i / W), h: R() });
@@ -298,13 +306,15 @@ function loadLevel() {
   Lv = buildLevel(world.lv); loadedRun = world.run; lvT0 = performance.now(); myCaught = 0; mateCaught = 0;
   players = [mkPlayer('P1'), mkPlayer('P2')];
   active = mode === 'guest' ? 1 : 0; setMeMate();
+  let resumed = false;
+  try { const sp = JSON.parse(sessionStorage.getItem('mf-pos') || 'null'); if (sp && sp.run === world.run && mode !== 'solo') { me.x = me.tx = sp.x; me.y = me.ty = sp.y; me.cp = sp.cp; resumed = true; } } catch (e) {}
   shadows = Lv.shadowSpawns.map((s, k) => ({ id: k, x: s.x + .5, y: s.y + .5, hx: s.x + .5, hy: s.y + .5, rx: s.x + .5, ry: s.y + .5, reg: s.reg, gone: 0, tgt: null, chase: false, spd: 1.35 }));
   linkState = {}; for (const l of Lv.links) linkState[l.id] = linkOpen(l);
   ground = null; groundKey = '';
   cam.x = me.x; cam.y = me.y;
   $('chap').textContent = `第${'一二三四五'[world.lv]}章・${Lv.spec.name}`;
   $('bSwap').style.display = mode === 'solo' ? 'block' : 'none';
-  show(null); showIntro();
+  show(null); if (resumed) { hideCard(); toast('回到森林裡了'); } else showIntro();
   Snd.start();
 }
 function setMeMate() { me = players[active]; mate = players[1 - active]; }
@@ -331,16 +341,22 @@ function hits(x, y, ign) {
   }
   return false;
 }
+// 撞牆時，如果旁邊不遠處有開口，就把人往開口滑過去（轉彎不用對很準）
+function slideTo(v, free) {
+  const c0 = Math.floor(v) + .5, c1 = c0 + (v > c0 ? 1 : -1);
+  for (const c of [c0, c1]) if (Math.abs(c - v) > .01 && Math.abs(c - v) < .72 && free(c)) return c;
+  return null;
+}
 function moveP(p, dx, dy) {
   const ign = new Set();   // 門在你身上關起來時，不會把你卡死
   for (let ty = Math.floor(p.y - PR); ty <= Math.floor(p.y + PR); ty++) for (let tx = Math.floor(p.x - PR); tx <= Math.floor(p.x + PR); tx++) if (solid(tx, ty)) ign.add(ty * Lv.W + tx);
   if (dx) {
     if (!hits(p.x + dx, p.y, ign)) p.x += dx;
-    else { const cy = Math.floor(p.y) + .5, o = cy - p.y; if (Math.abs(o) > .01 && !hits(p.x + dx, cy, ign)) p.y += Math.sign(o) * Math.min(Math.abs(o), Math.abs(dx)); }
+    else { const c = slideTo(p.y, v => !hits(p.x + dx, v, ign)); if (c != null) p.y += Math.sign(c - p.y) * Math.min(Math.abs(c - p.y), Math.abs(dx)); }
   }
   if (dy) {
     if (!hits(p.x, p.y + dy, ign)) p.y += dy;
-    else { const cx = Math.floor(p.x) + .5, o = cx - p.x; if (Math.abs(o) > .01 && !hits(cx, p.y + dy, ign)) p.x += Math.sign(o) * Math.min(Math.abs(o), Math.abs(dy)); }
+    else { const c = slideTo(p.x, v => !hits(v, p.y + dy, ign)); if (c != null) p.x += Math.sign(c - p.x) * Math.min(Math.abs(c - p.x), Math.abs(dy)); }
   }
 }
 
@@ -351,13 +367,13 @@ function nearest() {
   const consider = (o, d, label) => { if (d < bd) { bd = d; best = { ...o, label }; } };
   for (const t of Lv.things) {
     const d = Math.hypot(me.x - t.x - .5, me.y - t.y - .5);
-    if (t.t === 'lever' && d < 1.05) consider({ kind: 'lever', t }, d, world.levers[t.id] ? '推回' : '拉下');
-    if (t.t === 'stone' && d < 1.05) consider({ kind: 'stone', t }, d, '看');
+    if (t.t === 'lever' && d < 1.3) consider({ kind: 'lever', t }, d, world.levers[t.id] ? '推回' : '拉下');
+    if (t.t === 'stone' && d < 1.3) consider({ kind: 'stone', t }, d, '看');
   }
   for (const l of Lv.links) {
     if (l.k !== 'rune' && l.k !== 'door' || linkState[l.id]) continue;
     const d = Math.hypot(me.x - l.x - .5, me.y - l.y - .5);
-    if (d < 1.2) consider({ kind: l.k, l }, d, l.k === 'rune' ? '解鎖' : '開門');
+    if (d < 1.35) consider({ kind: l.k, l }, d, l.k === 'rune' ? '解鎖' : '開門');
   }
   return best;
 }
@@ -394,13 +410,13 @@ function onEvent(ev) {
   else if (ev.e === 'ping') { pings.push({ x: ev.x, y: ev.y, t: 0, mine: false }); Snd.sfx('ping'); }
   else if (ev.e === 'say') { mate.say = PHRASES[ev.i]; mate.sayT = 4; Snd.sfx('ping'); }
 }
-function pushWorld() { if (mode === 'host') send({ type: 'w', w: world, names, chars }); }
+function pushWorld() { if (mode === 'host') { send({ type: 'w', w: world, names, chars }); sess.set({ mode, roomCode, world, names, chars }); } }
 
 // ================= 影子 =================
 function shadeFloor(i, reg) {
   if (Lv.tiles[i] || Lv.reg[i] !== reg || Lv.linkAt[i]) return false;
   const x = i % Lv.W + .5, y = Math.floor(i / Lv.W) + .5;
-  return !Lv.fires.some(f => Math.hypot(f.x + .5 - x, f.y + .5 - y) < 1.9);
+  return !Lv.fires.some(f => Math.hypot(f.x + .5 - x, f.y + .5 - y) < 1.9) && !Lv.things.some(t => t.t === 'plate' && Math.hypot(t.x + .5 - x, t.y + .5 - y) < 1.6);
 }
 function stepShadows(dt) {
   for (const s of shadows) {
@@ -435,7 +451,7 @@ function stepShadows(dt) {
 
 // ================= 主迴圈：更新 =================
 const cam = { x: 0, y: 0 };
-let pings = [], scareEyes = [], danger = 0, lastStep = 0, lastSend = 0, lastShSend = 0, clearShown = null;
+let lastPosSave = 0, pings = [], scareEyes = [], danger = 0, lastStep = 0, lastSend = 0, lastShSend = 0, clearShown = null;
 const PHRASES = ['這邊！', '等我一下', '我站好了，快過去', '好可怕……', '我看到符文了', '你在哪裡？', '有影子！', '我愛你'];
 
 function update(dt, now) {
@@ -476,11 +492,11 @@ function update(dt, now) {
   for (const s of shadows) {
     if (s.gone > 0) continue;
     for (const p of (mode === 'solo' ? players : [me])) {
-      if (p.caught) continue;
+      if (p.caught || (p === me && modalOpen())) continue;
       const d = Math.hypot(p.x - s.x, p.y - s.y);
       if (p === me) danger = Math.max(danger, clamp((5 - d) / 4, 0, 1));
       if (d < .5) {
-        p.caught = 1.6; Snd.sfx('caught'); if (p === me) { myCaught++; shake = 14; }
+        p.caught = 1.6; Snd.sfx('caught'); if (p === me || mode === 'solo') myCaught++; if (p === me) shake = 14;
         s.gone = 4;
         if (mode === 'guest') send({ type: 'caught', run: world.run, sid: s.id });
         else if (mode === 'host') send({ type: 'ev', run: world.run, e: 'caught' });
@@ -501,6 +517,7 @@ function update(dt, now) {
   if (world.clear && clearShown !== world.run) { clearShown = world.run; showClear(); }
   // 網路
   if (mode !== 'solo' && net) {
+    if (now - lastPosSave > 1000) { lastPosSave = now; try { sessionStorage.setItem('mf-pos', JSON.stringify({ run: world.run, x: me.x, y: me.y, cp: me.cp })); } catch (e) {} }
     if (now - lastSend > 80) { lastSend = now; send({ type: 'p', run: world.run, x: +me.x.toFixed(3), y: +me.y.toFixed(3), d: me.dir, m: me.moving ? 1 : 0, c: me.caught > 0 ? 1 : 0 }); }
     if (mode === 'host' && now - lastShSend > 100 && shadows.length) { lastShSend = now; send({ type: 'sh', run: world.run, a: shadows.map(s => [+s.x.toFixed(2), +s.y.toFixed(2), s.gone > 0 ? 1 : 0, s.chase ? 1 : 0]) }); }
     $('netWarn').style.display = Date.now() - net.lastHeard > 6000 ? 'block' : 'none';
@@ -1261,7 +1278,15 @@ $('bSolo').onclick = () => {
 
 // ================= 連線（公開 MQTT 中繼，兩個 broker 同時送）=================
 const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt'];
-const myId = Math.random().toString(36).slice(2, 10);
+let myId = '';
+try { myId = sessionStorage.getItem('mf-id') || ''; } catch (e) {}
+if (!myId) { myId = Math.random().toString(36).slice(2, 10); try { sessionStorage.setItem('mf-id', myId); } catch (e) {} }
+// 這個分頁的連線狀態：重新整理時用來自動回到同一個房間、同一個位置
+const sess = {
+  get() { try { return JSON.parse(sessionStorage.getItem('mf-sess') || 'null'); } catch (e) { return null; } },
+  set(v) { try { sessionStorage.setItem('mf-sess', JSON.stringify(v)); } catch (e) {} },
+  clear() { try { sessionStorage.removeItem('mf-sess'); sessionStorage.removeItem('mf-pos'); } catch (e) {} },
+};
 let net = null, timers = [];
 function connectRoom(code) {
   disconnect();
@@ -1301,6 +1326,7 @@ function onMsg(m) {
       if (world && Lv) toast(`${names.P2} 進到森林裡了`);
       return;
     }
+    if (!guestId && names.P2 && m.type !== 'bye') guestId = m.from;   // 房主重新整理後，認回原本的另一半
     if (m.from !== guestId) return;
     guestHeard = Date.now();
     if (m.type === 'a') applyAct(m);
@@ -1333,11 +1359,13 @@ $('bHost').onclick = () => {
   connectRoom(roomCode);
   timers.push(setInterval(() => { if (world) pushWorld(); else send({ type: 'lobby', names, chars }); }, 2000));
   history.replaceState(null, '', location.pathname + '?room=' + roomCode);
+  sess.set({ mode, roomCode, world: null, names, chars });
   renderLobby(); show('lobby');
 };
 function guestJoin(code) {
   Snd.start(); mode = 'guest'; roomCode = code.toUpperCase().trim(); world = null; joined = false;
-  connectRoom(roomCode);
+  connectRoom(roomCode); sess.set({ mode, roomCode });
+  history.replaceState(null, '', location.pathname + '?room=' + roomCode);
   const join = () => send({ type: 'join', name: myName(), char: S.char });
   timers.push(setInterval(() => { if (!joined) join(); }, 1000));
   timers.push(setInterval(() => { if (!Lv) send({ type: 'hb' }); }, 3000));
@@ -1364,14 +1392,23 @@ function leave() {
   if (net) send({ type: 'bye' });
   setTimeout(disconnect, 200);
   mode = null; world = null; Lv = null; players = []; me = mate = null; shadows = []; loadedRun = null;
-  hideCard(); closeModal(); history.replaceState(null, '', location.pathname);
+  hideCard(); closeModal(); sess.clear(); history.replaceState(null, '', location.pathname);
   renderHome(); show('home');
 }
 
 // ================= 啟動 =================
 renderHome();
 const qr = new URLSearchParams(location.search).get('room');
-if (qr) { $('joinCode').value = qr; toast('輸入名字、選好角色，按「加入」'); }
+const old = sess.get();
+if (qr && old && old.roomCode === qr && old.mode === 'guest') guestJoin(qr);
+else if (qr && old && old.roomCode === qr && old.mode === 'host') resumeHost(old);
+else if (qr) { $('joinCode').value = qr; toast('輸入名字、選好角色，按「加入」'); }
+function resumeHost(o) {
+  mode = 'host'; roomCode = o.roomCode; names = o.names; chars = o.chars; world = o.world; guestId = null;
+  connectRoom(roomCode);
+  timers.push(setInterval(() => { if (world) pushWorld(); else send({ type: 'lobby', names, chars }); }, 2000));
+  if (world) loadLevel(); else { renderLobby(); show('lobby'); }
+}
 let lastT = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
