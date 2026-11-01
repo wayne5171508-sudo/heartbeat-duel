@@ -82,6 +82,31 @@ a.back { color:var(--dim); font-size:13px; text-align:center; text-decoration:no
   .slots div { width:44px; height:44px; } .gl svg { width:40px; height:40px; }
   .box button { padding:9px 14px; }
 }
+#room { position:fixed; inset:0; z-index:25; display:none; background:#070504; }
+#room.show { display:block; }
+.rhead { position:absolute; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 18px max(12px,env(safe-area-inset-left)); background:linear-gradient(rgba(5,3,2,.85),rgba(5,3,2,0)); pointer-events:none; }
+.rhead > * { pointer-events:auto; }
+#rPan { position:absolute; left:50%; transform:translateX(-50%); top:58px; font-size:12px; color:rgba(255,230,190,.75); background:rgba(0,0,0,.45); padding:4px 12px; border-radius:20px; pointer-events:none; white-space:nowrap; }
+.rhead b { font-size:18px; letter-spacing:2px; }
+.rhead button { padding:8px 14px; font-size:14px; }
+#rStage { position:absolute; inset:0; overflow-x:auto; overflow-y:hidden; touch-action:pan-x; scrollbar-width:none; }
+#rStage::-webkit-scrollbar { display:none; }
+#rcv { position:absolute; border-radius:12px; }
+#rHots { position:absolute; }
+.hot { position:absolute; transform:translate(-50%,-50%); background:transparent; border:none; padding:0; border-radius:12px; }
+.hot i { position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px; border-radius:50%; background:radial-gradient(circle,rgba(255,230,170,.95),rgba(255,200,110,0) 70%); animation:twinkle 2.2s ease-in-out infinite; }
+.hot.done i { opacity:.25; animation:none; }
+.hot:active { background:rgba(255,220,160,.1); }
+@keyframes twinkle { 50% { transform:scale(1.7); opacity:.45; } }
+.rinv { position:absolute; left:0; right:0; bottom:0; padding:22px max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); display:flex; flex-direction:column; gap:6px; background:linear-gradient(rgba(5,3,2,0),rgba(5,3,2,.88) 40%); pointer-events:none; }
+.rinv > * { pointer-events:auto; } .rinv .sub { text-align:left; pointer-events:none; }
+.items { display:flex; flex-wrap:wrap; gap:8px; }
+.item { font-size:14px; padding:8px 12px; border-radius:20px; border:1px solid var(--line); background:rgba(255,255,255,.05); }
+.item.on { border-color:var(--amber); background:rgba(242,178,92,.2); box-shadow:0 0 12px rgba(242,178,92,.35); }
+.pad .big, .slots .big { font-size:24px; font-family:Georgia,serif; color:#e9dcc0; }
+.sw { display:inline-block; width:24px; height:24px; border-radius:6px; box-shadow:inset 0 0 0 2px rgba(0,0,0,.3); }
+.pad.p-digit { grid-template-columns:repeat(5,1fr); } .pad.p-dir { grid-template-columns:repeat(4,1fr); }
+.slots div { width:min(54px,14vw); height:min(54px,14vw); flex:none; }
 #toast { position:fixed; left:50%; top:22%; transform:translateX(-50%); z-index:40; background:rgba(6,10,14,.88); border:1px solid var(--line); color:var(--ink); padding:10px 18px; border-radius:24px; font-size:14px; display:none; pointer-events:none; text-align:center; max-width:86vw; font-family:"Noto Serif TC",serif; }
 </style>
 </head>
@@ -94,7 +119,7 @@ a.back { color:var(--dim); font-size:13px; text-align:center; text-decoration:no
   <div id="sayMenu"></div>
   <div id="rb">
     <button id="bAct"></button>
-    <div class="small"><button id="bSwap" title="換人">⇄</button><button id="bSay" title="說話">💬</button><button id="bPing" title="標記位置">📍</button></div>
+    <div class="small"><button id="bBag" title="背包">🎒</button><button id="bSwap" title="換人">⇄</button><button id="bSay" title="說話">💬</button><button id="bPing" title="標記位置">📍</button></div>
   </div>
 </div>
 
@@ -106,6 +131,7 @@ a.back { color:var(--dim); font-size:13px; text-align:center; text-decoration:no
   <div><div class="lbl">章節</div><div class="chaps" id="chaps"></div></div>
   <button class="main" id="bHost">開房間，邀請另一半</button>
   <div class="row"><input id="joinCode" maxlength="5" placeholder="房間代碼" style="text-transform:uppercase"><button id="bJoin">加入</button></div>
+  <button class="ghost" id="bTimed"></button>
   <button class="ghost" id="bSolo">一個人先探路（兩隻輪流操控）</button>
   <div class="note">🎧 建議戴耳機，並且<b>開著通話</b>一起玩：石碑上的符文只有一個人看得到，要唸給對方聽。<br>操作：左半邊螢幕拖曳移動，右下角按鈕互動。電腦可用 WASD／方向鍵、E 互動、Q 標記。</div>
   <a class="back" href="./">← 回到心跳對決</a>
@@ -125,6 +151,8 @@ a.back { color:var(--dim); font-size:13px; text-align:center; text-decoration:no
 
 <div id="card" class="overlay"><div class="box" id="cardBox"></div></div>
 <div id="modal" class="overlay"><div class="box" id="modalBox"></div></div>
+<div id="room"><div id="rStage"><canvas id="rcv"></canvas><div id="rHots"></div></div><div id="rPan">← 左右滑動，看看整個房間 →</div><div class="rhead"><div><b id="rTitle" class="serif"></b><div id="rMate" class="sub" style="text-align:left"></div></div><button id="rLeave">離開小屋</button></div>
+  <div class="rinv"><div id="rItems" class="items"></div><div id="rHint" class="sub"></div></div></div>
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
@@ -165,46 +193,46 @@ function runeCode(id) {
 const LEVELS = [
   { name: '走散', seed: 1101, light: 4.6, dark: .93, braid: .3,
     poem: '起霧了。<br>回過神來，牽著的那隻手不見了。',
-    tips: ['你們從森林的兩端出發，要在中間會合，再一起走到發光的出口', '<b>紫色石板</b>：站上去，某處的荊棘門就會打開；一離開就關上', '你站著，對方才過得去；換對方站，你才過得去', '找不到對方？按 📍 標出自己的位置'],
-    grid: ['AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB'],
-    spawn: { P1: 'A', P2: 'B' }, exit: 'C',
-    links: [{ a: 'A', b: 'C', k: 'gate', id: 'g1' }, { a: 'B', b: 'C', k: 'gate', id: 'g2' }],
-    things: [{ t: 'plate', in: 'C', opens: 'g1' }, { t: 'plate', in: 'A', opens: 'g2' }],
+    tips: ['你們從森林的兩端出發，要在中間會合，再一起走到發光的出口', '<b>小木屋</b>：走到門口按「進入」，點房間裡發亮的地方調查。<b>你的鎖，線索常常在對方那間</b>', '<b>紫色石板</b>：站上去，某處的荊棘門就會打開；一離開就關上', '<b>霧牆</b>擋住出口，聽說鈴聲能讓霧散去'],
+    grid: ['AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACCCCBBBBB', 'AAAAACXXCBBBBB'],
+    spawn: { P1: 'A', P2: 'B' }, exit: 'X',
+    links: [{ a: 'A', b: 'C', k: 'gate', id: 'g1' }, { a: 'B', b: 'C', k: 'gate', id: 'g2' }, { a: 'C', b: 'X', k: 'seal', id: 's1', need: 'bellFull' }],
+    things: [{ t: 'plate', in: 'C', opens: 'g1' }, { t: 'plate', in: 'A', opens: 'g2' }, { t: 'cabin', in: 'A', room: 'A' }, { t: 'cabin', in: 'B', room: 'B' }],
     shadows: {} },
   { name: '符文', seed: 2207, light: 4.4, dark: .94, braid: .25,
     poem: '石碑上刻著發光的記號。<br>答案，總在另一個人那裡。',
-    tips: ['走到<b>石碑</b>旁按「看」，記住四個符號：月、星、眼、樹、火、心', '<b>石門</b>在另一個人那邊，要靠你唸給對方聽，由對方輸入', '<b>鑰匙</b>撿到就兩個人共用，可以打開木門', '輸錯不會怎樣，只是……森林會笑'],
+    tips: ['走到<b>石碑</b>旁按「看」，記住四個符號：月、星、眼、樹、火、心', '<b>石門</b>在另一個人那邊，要靠你唸給對方聽', '小木屋裡的保險箱放著<b>鑰匙</b>，可是密碼被撕成了兩半', '輸錯不會怎樣，只是……森林會笑'],
     grid: ['AAAACCCCCBBBB', 'AAAACCCCCBBBB', 'AAAACCCCCBBBB', 'AAAADDDDDBBBB', 'AAAADDDDDBBBB', 'AAAADDDDDBBBB', 'AAAADDDDDBBBB'],
     spawn: { P1: 'A', P2: 'B' }, exit: 'D',
     links: [{ a: 'B', b: 'C', k: 'rune', id: 'r1' }, { a: 'A', b: 'C', k: 'gate', id: 'g1' }, { a: 'C', b: 'D', k: 'door', id: 'd1' }],
-    things: [{ t: 'stone', in: 'A', rune: 'r1' }, { t: 'plate', in: 'C', opens: 'g1' }, { t: 'key', in: 'B' }],
+    things: [{ t: 'stone', in: 'A', rune: 'r1' }, { t: 'plate', in: 'C', opens: 'g1' }, { t: 'cabin', in: 'A', room: 'A' }, { t: 'cabin', in: 'B', room: 'B' }],
     shadows: {} },
   { name: '影子', seed: 3313, light: 4.0, dark: .95, braid: .3,
     poem: '有什麼東西，<br>一直跟在樹的後面。',
-    tips: ['這次要<b>分頭</b>走，替對方打開前面的荊棘門', '<b>影子</b>靠近時會聽到心跳；被碰到會被拖回最近的營火', '<b>營火</b>旁邊影子不敢靠近，也是你的存檔點', '影子比你慢，看到就轉身跑'],
+    tips: ['這次要<b>分頭</b>走，各自找到小木屋，替對方打開前面的荊棘門', '<b>影子</b>靠近時會聽到心跳；被碰到會被拖回最近的營火', '<b>營火、石板</b>旁邊影子不敢靠近；在小木屋裡也很安全', '出口前的霧牆，要拼好的護身符才打得開'],
     grid: ['LLLLLSSSSRRRRR', 'LLLLLSSSSRRRRR', 'LLLLLSSSSRRRRR', 'LLLLLSSSSRRRRR', 'MMMMMMXXNNNNNN', 'MMMMMMXXNNNNNN', 'MMMMMMXXNNNNNN', 'MMMMMMXXNNNNNN', 'MMMMMMXXNNNNNN'],
     spawn: { P1: 'S', P2: 'S' }, exit: 'X',
-    links: [{ a: 'S', b: 'L', k: 'open', id: 'o1' }, { a: 'S', b: 'R', k: 'open', id: 'o2' }, { a: 'L', b: 'M', k: 'gate', id: 'g1' }, { a: 'R', b: 'N', k: 'gate', id: 'g2' }, { a: 'M', b: 'X', k: 'open', id: 'o3' }, { a: 'N', b: 'X', k: 'open', id: 'o4' }],
-    things: [{ t: 'plate', in: 'L', opens: 'g2' }, { t: 'plate', in: 'N', opens: 'g1' }],
+    links: [{ a: 'S', b: 'L', k: 'open', id: 'o1' }, { a: 'S', b: 'R', k: 'open', id: 'o2' }, { a: 'L', b: 'M', k: 'gate', id: 'g1' }, { a: 'R', b: 'N', k: 'gate', id: 'g2' }, { a: 'M', b: 'X', k: 'seal', id: 's1', need: 'charm' }, { a: 'N', b: 'X', k: 'seal', id: 's2', need: 'charm' }],
+    things: [{ t: 'plate', in: 'L', opens: 'g2' }, { t: 'plate', in: 'N', opens: 'g1' }, { t: 'cabin', in: 'L', room: 'A' }, { t: 'cabin', in: 'R', room: 'B' }],
     shadows: { L: 1, R: 1, M: 1, N: 1 } },
   { name: '濃霧', seed: 4421, light: 2.7, dark: .97, braid: .3, fog: 1,
     poem: '燈籠的光，<br>只剩下腳邊一點點。',
-    tips: ['霧太濃了，多用 📍 和 💬 告訴對方你在哪裡', '<b>木樁拉桿</b>：拉下去之後，荊棘門會一直開著', '石碑、鑰匙都藏在看不清楚的角落', '先找到對方，再分頭行動'],
+    tips: ['霧太濃了，多用 📍 和 💬 告訴對方你在哪裡', '<b>木樁拉桿</b>：拉下去之後，荊棘門會一直開著', '霧裡的小木屋有一盞油燈，點亮它，燈籠會跟著變亮', '鑰匙鎖在木箱裡，密碼刻在另一間小屋的牆上'],
     grid: ['QQQQAAAAACCCCC', 'QQQQAAAAACCCCC', 'QQQQAAAAACCCCC', 'SSSSSSSSSCCCCC', 'SSSSSSSSSXXXXX', 'BBBBBBBBBXXXXX', 'BBBBBBBBBXXXXX', 'BBBBBBBBBXXXXX', 'BBBBBBBBBXXXXX'],
     spawn: { P1: 'S', P2: 'S' }, exit: 'X',
     links: [{ a: 'S', b: 'A', k: 'open', id: 'o1' }, { a: 'S', b: 'B', k: 'open', id: 'o2' }, { a: 'A', b: 'Q', k: 'gate', id: 'g1' }, { a: 'S', b: 'C', k: 'rune', id: 'r1' }, { a: 'C', b: 'X', k: 'door', id: 'd1' }],
-    things: [{ t: 'plate', in: 'B', opens: 'g1' }, { t: 'lever', in: 'Q', opens: 'g1' }, { t: 'stone', in: 'Q', rune: 'r1' }, { t: 'key', in: 'B' }],
+    things: [{ t: 'plate', in: 'B', opens: 'g1' }, { t: 'lever', in: 'Q', opens: 'g1' }, { t: 'stone', in: 'Q', rune: 'r1' }, { t: 'cabin', in: 'Q', room: 'A' }, { t: 'cabin', in: 'B', room: 'B' }],
     shadows: { A: 1, B: 1, C: 1 } },
   { name: '森林之心', seed: 5531, light: 3.5, dark: .955, braid: .28,
     poem: '出口就在前面。<br>只要你們兩個，都還在。',
-    tips: ['<b>你身邊的石碑，是對方的答案</b>：兩個人要互相唸符文', '下面的荊棘門要輪流幫對方站石板', '最後的木門需要鑰匙，鑰匙在最深的地方', '影子變多了，走慢一點也沒關係'],
+    tips: ['<b>你身邊的石碑，是對方的答案</b>：兩個人要互相唸符文', '下面的荊棘門要輪流幫對方站石板', '最後一扇門上有兩個圓形凹槽……小木屋裡藏著守林人最後的日記', '影子變多了，走慢一點也沒關係'],
     grid: ['AAAAAAAABBBBBBBB', 'AAAAAAAABBBBBBBB', 'AAAAAAAABBBBBBBB', 'CCCCCCCCDDDDDDDD', 'CCCCCCCCDDDDDDDD', 'CCCCCCCCDDDDDDDD', 'EEEEEEEEEEEEEEEE', 'EEEEEEEEEEEEEEEE', 'EEEEEEXXXXEEEEEE', 'EEEEEEXXXXEEEEEE'],
     spawn: { P1: 'A', P2: 'B' }, exit: 'X',
-    links: [{ a: 'A', b: 'C', k: 'rune', id: 'r1' }, { a: 'B', b: 'D', k: 'rune', id: 'r2' }, { a: 'C', b: 'E', k: 'gate', id: 'g1' }, { a: 'D', b: 'E', k: 'gate', id: 'g2' }, { a: 'E', b: 'X', k: 'door', id: 'd1' }],
-    things: [{ t: 'stone', in: 'B', rune: 'r1' }, { t: 'stone', in: 'A', rune: 'r2' }, { t: 'plate', in: 'D', opens: 'g1' }, { t: 'plate', in: 'E', opens: 'g2' }, { t: 'key', in: 'E' }],
+    links: [{ a: 'A', b: 'C', k: 'rune', id: 'r1' }, { a: 'B', b: 'D', k: 'rune', id: 'r2' }, { a: 'C', b: 'E', k: 'gate', id: 'g1' }, { a: 'D', b: 'E', k: 'gate', id: 'g2' }, { a: 'E', b: 'X', k: 'seal', id: 's1', need: 'rings' }],
+    things: [{ t: 'stone', in: 'B', rune: 'r1' }, { t: 'stone', in: 'A', rune: 'r2' }, { t: 'plate', in: 'D', opens: 'g1' }, { t: 'plate', in: 'E', opens: 'g2' }, { t: 'cabin', in: 'A', room: 'A' }, { t: 'cabin', in: 'B', room: 'B' }],
     shadows: { C: 1, D: 1, E: 2 } },
 ];
-const ENDING = '天亮了。<br>霧散開的時候，你們才發現——<br>彼此的手，一直都沒有放開。';
+const ENDING = '天亮了。<br>你們牽著手走出森林的時候，身後的兩個影子慢慢靠近，<br>牽起了手，化成滿天的螢火蟲。<br>這一次，誰都沒有放手。';
 
 function buildLevel(n) {
   const spec = LEVELS[n], R = mulberry32(spec.seed), grid = spec.grid;
@@ -269,7 +297,11 @@ function buildLevel(n) {
     const i = pool[Math.floor(R() * pool.length)]; used.add(i); return i;
   }
   const things = spec.things.map((t, k) => {
-    const i = place(t.in, t.t === 'plate' ? .3 : .6, t.t === 'plate' ? .75 : 1);
+    let i = place(t.in, t.t === 'plate' ? .3 : t.t === 'cabin' ? .4 : .6, t.t === 'plate' ? .75 : 1);
+    if (t.t === 'cabin') {   // 小屋蓋在路旁的樹叢裡，門朝著路（優先蓋在路的上方）
+      const j = [[0, -1], [1, 0], [-1, 0], [0, 1]].map(([dx, dy]) => i + dx + dy * W).find(j => tiles[j] === 1);
+      if (j != null) i = j;
+    }
     return { ...t, id: t.t + k, i, x: i % W, y: Math.floor(i / W) };
   });
   const fires = [], shadowSpawns = [];
@@ -278,14 +310,301 @@ function buildLevel(n) {
   for (let i = 0; i < W * H; i++) if (safeSpots.some(f => Math.hypot(f.x - i % W, f.y - Math.floor(i / W)) < 2.6)) used.add(i);
   for (const [r, n] of Object.entries(spec.shadows))
     for (let k = 0; k < n; k++) { const i = place(r, .45, 1); shadowSpawns.push({ x: i % W, y: Math.floor(i / W), reg: r }); }
-  const mush = [], trees = [];
+  const mush = [], trees = [], block = new Set(things.filter(t => t.t === 'cabin').map(t => t.i));
   for (let i = 0; i < W * H; i++) {
     if (isFloor(i) && !used.has(i) && !linkAt[i] && R() < .045) mush.push({ x: i % W, y: Math.floor(i / W), h: R() });
-    if (!isFloor(i) && R() < .38) trees.push({ x: i % W, y: Math.floor(i / W), v: Math.floor(R() * 5), s: .85 + R() * .3 });
+    if (!isFloor(i) && !block.has(i) && !block.has(i - 1) && !block.has(i + 1) && R() < .38) trees.push({ x: i % W, y: Math.floor(i / W), v: Math.floor(R() * 5), s: .85 + R() * .3 });
   }
   const xy = i => ({ x: i % W, y: Math.floor(i / W) });
-  return { n, spec, W, H, tiles, reg, links, linkAt, things, spawn: { P1: xy(spawn.P1), P2: xy(spawn.P2) }, exit: xy(exit), fires, shadowSpawns, mush, trees };
+  return { n, spec, W, H, tiles, reg, links, linkAt, things, block, spawn: { P1: xy(spawn.P1), P2: xy(spawn.P2) }, exit: xy(exit), fires, shadowSpawns, mush, trees };
 }
+
+// ================= 小木屋密室 =================
+const ITEMS = {
+  bell: { n: '缺了鈴舌的銅鈴', e: '🔔' }, clapper: { n: '鈴舌', e: '🔩' }, bellFull: { n: '完整的銅鈴', e: '🔔' },
+  charmL: { n: '半塊護身符（左）', e: '🌗' }, charmR: { n: '半塊護身符（右）', e: '🌓' }, charm: { n: '守林人的護身符', e: '🧿' },
+  matches: { n: '一盒火柴', e: '🔥' },
+  ringA: { n: '一只銀戒指', e: '💍' }, ringB: { n: '另一只銀戒指', e: '💍' }, rings: { n: '一對戒指', e: '💞' },
+};
+const RECIPES = [
+  { a: 'bell', b: 'clapper', out: 'bellFull', text: '把鈴舌裝回銅鈴裡。輕輕一晃，聲音很清脆。' },
+  { a: 'charmL', b: 'charmR', out: 'charm', text: '兩半護身符拼在一起，裂痕慢慢消失了。' },
+  { a: 'ringA', b: 'ringB', out: 'rings', text: '兩只戒指靠在一起，內側的字連成一句話：「別放手」。' },
+];
+const COLORS = [['紅', '#d8434f'], ['橙', '#e98a3a'], ['黃', '#e8cf4a'], ['綠', '#4fae6a'], ['藍', '#4a7fd8'], ['紫', '#9a5ad8']];
+const ARROWS = ['↑', '→', '↓', '←'];
+function cabinCodes() {
+  const R = mulberry32((world.seed ^ (world.lv * 7919 + 13)) >>> 0), ri = n => Math.floor(R() * n);
+  const pick = (n, k, uniq) => { const out = []; while (out.length < k) { const v = ri(n); if (!uniq || !out.includes(v)) out.push(v); } return out; };
+  const h = 1 + ri(12), m = 5 * (1 + ri(11)), mo = 1 + ri(12), da = 1 + ri(28);
+  return { clock: [h, m], clockCode: [Math.floor(h / 10), h % 10, Math.floor(m / 10), m % 10],
+    d4: pick(10, 4), g4: pick(6, 4, true), c4: pick(6, 4), dir: pick(4, 5), tally: pick(9, 4).map(v => v + 1),
+    date: [mo, da], dateCode: [Math.floor(mo / 10), mo % 10, Math.floor(da / 10), da % 10] };
+}
+// 線索圖
+function clockSVG([h, m]) {
+  const a = (m / 60) * 360, b = ((h % 12) + m / 60) * 30, ticks = [...Array(12)].map((_, i) => { const r = i * 30 * Math.PI / 180; return `<line x1="${60 + Math.sin(r) * 44}" y1="${60 - Math.cos(r) * 44}" x2="${60 + Math.sin(r) * 50}" y2="${60 - Math.cos(r) * 50}" stroke="#3a2a1a" stroke-width="${i % 3 ? 2 : 4}"/>`; }).join('');
+  return `<svg viewBox="0 0 120 120" style="width:150px;height:150px;display:block;margin:0 auto"><circle cx="60" cy="60" r="56" fill="#e9dcc0" stroke="#5a3a1e" stroke-width="5"/>${ticks}
+    <line x1="60" y1="60" x2="${60 + Math.sin(b * Math.PI / 180) * 26}" y2="${60 - Math.cos(b * Math.PI / 180) * 26}" stroke="#1a120a" stroke-width="5" stroke-linecap="round"/>
+    <line x1="60" y1="60" x2="${60 + Math.sin(a * Math.PI / 180) * 40}" y2="${60 - Math.cos(a * Math.PI / 180) * 40}" stroke="#1a120a" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="60" r="4" fill="#1a120a"/>
+    <text x="60" y="26" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#3a2a1a">12</text><text x="98" y="64" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#3a2a1a">3</text><text x="60" y="102" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#3a2a1a">6</text><text x="22" y="64" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#3a2a1a">9</text></svg>`;
+}
+// 數字被撕成兩半：只看得到上半或下半
+function tornSVG(digits, top) {
+  const id = 'tc' + (top ? 't' : 'b') + Math.random().toString(36).slice(2, 6);
+  let edge = 'M0 52'; for (let x = 0; x <= 260; x += 13) edge += ` L${x} ${49 + ((x / 13) % 2 ? 5 : -3)}`;
+  const clip = top ? `${edge} L260 0 L0 0 Z` : `${edge} L260 110 L0 110 Z`;
+  return `<svg viewBox="0 0 260 110" style="width:100%;max-width:300px;display:block;margin:0 auto"><defs><clipPath id="${id}"><path d="${clip}"/></clipPath></defs>
+    <g clip-path="url(#${id})"><rect width="260" height="110" fill="#e6dcc4"/><text x="130" y="86" text-anchor="middle" font-size="84" font-family="Georgia,'Times New Roman',serif" fill="#2a1c12" letter-spacing="14">${digits.join('')}</text></g>
+    <path d="${edge}" fill="none" stroke="#8a7a5a" stroke-width="1.5"/></svg>`;
+}
+const booksHTML = c4 => `<div style="display:flex;gap:8px;justify-content:center;align-items:flex-end;height:120px">${c4.map((c, i) => `<div style="width:34px;height:${96 + (i % 2) * 18}px;border-radius:4px;background:linear-gradient(90deg,${COLORS[c][1]},rgba(0,0,0,.35));box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)"></div>`).join('')}</div>`;
+function tallySVG(vals) {
+  let x = 10, s = '';
+  for (const v of vals) {
+    for (let k = 0; k < v; k++) { const g5 = k % 5 === 4; if (g5) s += `<line x1="${x - 34}" y1="68" x2="${x - 4}" y2="22" stroke="#d8cbb0" stroke-width="3"/>`; else { s += `<line x1="${x}" y1="20" x2="${x + 2}" y2="70" stroke="#d8cbb0" stroke-width="3"/>`; x += 9; } }
+    x += 26;
+  }
+  return `<svg viewBox="0 0 ${x} 90" style="width:100%;display:block;background:#3b2a1d;border-radius:10px">${s}</svg>`;
+}
+function footSVG(dirs) {
+  const step = 76; let s = '';
+  dirs.forEach((d, i) => {
+    const cx = 44 + i * step;
+    s += `<g transform="translate(${cx} 52) rotate(${d * 90})"><ellipse cx="0" cy="6" rx="11" ry="19" fill="#7a5232"/><ellipse cx="0" cy="22" rx="8" ry="7" fill="#7a5232"/>` +
+      [[-9, -15, 3.6], [-3.5, -19, 4.2], [2.5, -19.5, 4], [8, -16.5, 3.4], [12, -11, 3]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#7a5232"/>`).join('') +
+      `</g><text x="${cx}" y="104" text-anchor="middle" font-size="15" fill="#d8c8b0">${i + 1}</text>`;
+  });
+  return `<svg viewBox="0 0 ${14 + dirs.length * step} 112" style="width:100%;display:block;background:#2a2018;border-radius:10px">${s}</svg>`;
+}
+const glyphRow = (g4, frost) => `<div class="glyphs">${g4.map(i => `<div class="gl" style="${frost ? 'filter:grayscale(1) brightness(1.6);opacity:.8' : ''}">${glyphSVG(i)}</div>`).join('')}</div>`;
+
+// 每章兩間小屋：A 在 P1 那邊、B 在 P2 那邊（第三、四章兩人一起出發，自己決定誰去哪間）
+// 物件：o 是畫法；read 是看到的文字；lock 是密碼鎖；take 是拿東西；use 是要拿物品來用
+const CABINS = [
+  { A: { title: '獵人小屋', objs: [
+      { id: 'win', o: 'window', x: .2, y: .3, read: () => '窗外是一片白霧。<br>霧裡……好像有人影站著，一動也不動。' },
+      { id: 'books', o: 'shelf', x: .8, y: .36, read: c => `書架上有四本厚厚的書，書背的顏色由左到右是：${booksHTML(c.c4)}<p class="sub">其中一本夾著紙條：「抽屜的鎖，照書的顏色。」</p>` },
+      { id: 'tbl', o: 'table', x: .5, y: .78 },
+      { id: 'note', o: 'note', x: .42, y: .705, read: () => '<b>給走散的人：</b><br>木盒的密碼，是<b>另一間小屋</b>牆上那個停住的時鐘的時間。<br><span class="sub">（四位數，例如 9 點 05 分 → 0905）</span>' },
+      { id: 'box', o: 'box', x: .6, y: .7, lock: { type: 'digit', code: c => c.clockCode, give: 'bell', title: '木盒', prompt: '木盒上有一個四位數的轉輪鎖。' }, done: '木盒已經空了。' },
+    ] },
+    B: { title: '伐木小屋', objs: [
+      { id: 'clock', o: 'clock', x: .5, y: .27, read: c => `${clockSVG(c.clock)}<p class="poem">牆上的時鐘停住了，秒針一動也不動。</p>` },
+      { id: 'drawer', o: 'dresser', x: .22, y: .7, lock: { type: 'color', code: c => c.c4, give: 'clapper', title: '抽屜', prompt: '抽屜上有四格顏色轉盤。旁邊刻著：「照書架的顏色」。' }, done: '抽屜裡什麼都沒有了。' },
+      { id: 'bed', o: 'bed', x: .74, y: .72, read: () => '枕頭上有兩個凹痕，像剛剛還有兩個人躺著。<br>摸起來……還是溫的。' },
+    ] } },
+  { A: { title: '守林人小屋', objs: [
+      { id: 'paper', o: 'paper', x: .2, y: .32, read: c => `牆上釘著半張紙，下半部被撕掉了。${tornSVG(c.d4, true)}<p class="sub">另外半張，會不會在別的地方？</p>` },
+      { id: 'win', o: 'window', x: .55, y: .3, read: () => '玻璃上有一個手印。<br>是從<b>外面</b>按上來的。' },
+      { id: 'tbl', o: 'table', x: .36, y: .78 },
+      { id: 'diary', o: 'diary', x: .36, y: .71, read: () => '<b>守林人日記・一</b><br>今晚又起霧了。有一對戀人說要穿過森林去看日出，我勸他們別去。<br>他們笑著說：「只要不放開手，就不會走丟。」' },
+      { id: 'safe', o: 'safe', x: .76, y: .7, lock: { type: 'digit', code: c => c.d4, give: 'key', title: '保險箱', prompt: '鐵製的保險箱，四位數密碼。' }, done: '保險箱已經空了。' },
+    ] },
+    B: { title: '儲藏小屋', objs: [
+      { id: 'mirror', o: 'mirror', x: .3, y: .34, read: () => '鏡子裡，你身後站著一個沒有臉的人。<br><br>回頭——什麼都沒有。' },
+      { id: 'paper', o: 'floorpaper', x: .74, y: .78, read: c => `地上有半張被撕掉的紙，只剩下半部。${tornSVG(c.d4, false)}` },
+      { id: 'crate', o: 'crate', x: .55, y: .72 },
+      { id: 'diary', o: 'diary', x: .55, y: .63, read: () => '<b>守林人日記・二</b><br>第二天早上霧散了，可是他們沒有回來。<br>我在小路上撿到一隻手套，還有……兩串往不同方向走的腳印。' },
+    ] } },
+  { A: { title: '西邊的小屋', objs: [
+      { id: 'paint', o: 'painting', x: .6, y: .3, read: c => `一幅森林的畫。仔細看，樹幹上藏著四個淡淡發光的記號，由左到右：${glyphRow(c.g4)}` },
+      { id: 'win', o: 'window', x: .86, y: .32, read: () => '窗外有兩個影子，背對背站著。<br>你眨了眨眼，它們不見了。' },
+      { id: 'ward', o: 'wardrobe', x: .2, y: .58, lock: { type: 'dir', code: c => c.dir, give: 'charmL', title: '衣櫃', prompt: '衣櫃上有一個方向鎖，要依序推五次。' }, done: '衣櫃裡只剩幾件舊外套。' },
+      { id: 'tbl', o: 'table', x: .52, y: .8 },
+      { id: 'diary', o: 'diary', x: .52, y: .73, read: () => '<b>守林人日記・三</b><br>我開始在夜裡聽見他們的聲音。一個在東邊喊，一個在西邊回答。<br>可是不管怎麼走，都走不到一起。' },
+    ] },
+    B: { title: '東邊的小屋', objs: [
+      { id: 'feet', o: 'footprints', x: .5, y: .79, read: c => `地板上有一串泥巴腳印，從門口開始，一步一步……${footSVG(c.dir)}<p class="sub">（腳尖朝的方向，數字是順序）</p>` },
+      { id: 'music', o: 'musicbox', x: .28, y: .66, lock: { type: 'glyph', code: c => c.g4, give: 'charmR', title: '音樂盒', prompt: '音樂盒的蓋子上有四個符文凹槽。' }, done: '音樂盒輕輕轉著，放的是一首搖籃曲。' },
+      { id: 'chair', o: 'rocker', x: .78, y: .66, read: () => '搖椅自己在輕輕搖晃。<br>你一靠近，它就停了。' },
+      { id: 'clockb', o: 'clock', x: .5, y: .27, read: () => '時鐘的指針一直在倒著走。' },
+    ] } },
+  { A: { title: '霧裡的小屋', objs: [
+      { id: 'tbl', o: 'table', x: .46, y: .8 },
+      { id: 'diary', o: 'diary', x: .38, y: .73, read: () => '<b>守林人日記・四</b><br>我在霧最濃的地方蓋了這間小屋，每晚都點著燈。<br>也許哪一天，他們會循著光找到彼此。' },
+      { id: 'lamp', o: 'lamp', x: .56, y: .68, use: { need: 'matches', text: '油燈亮了起來。你們的燈籠好像也跟著變亮了。' }, hint: '油燈裡還有油，可是沒有火。', done: '油燈靜靜地亮著。' },
+      { id: 'chest', o: 'chest', x: .18, y: .76, lock: { type: 'digit', code: c => c.tally, give: 'key', title: '木箱', prompt: '木箱上有四位數的鎖。箱蓋刻著：「數一數牆上的刻痕」。' }, done: '木箱已經空了。' },
+      { id: 'doll', o: 'doll', x: .84, y: .76, read: () => '一個破舊的布娃娃，縫著兩顆鈕扣眼睛。<br>你轉過身時，它好像換了個姿勢。' },
+    ] },
+    B: { title: '湖邊的小屋', objs: [
+      { id: 'tally', o: 'tally', x: .3, y: .32, read: c => `牆上有四組用指甲刮出來的刻痕，由左到右：${tallySVG(c.tally)}` },
+      { id: 'drawer', o: 'dresser', x: .26, y: .72, take: 'matches', text: '抽屜裡有一盒火柴，還能用。', done: '抽屜空了。' },
+      { id: 'bed', o: 'bed', x: .72, y: .72, read: () => '床底下有一雙小小的鞋子，<br>鞋尖朝著門外。' },
+      { id: 'win', o: 'window', x: .72, y: .3, read: () => '窗外是一座湖。<br>湖面上，有兩盞燈籠在霧裡漂著，越漂越遠。' },
+    ] } },
+  { A: { title: '森林之心・東屋', objs: [
+      { id: 'frost', o: 'window', x: .24, y: .3, frost: 1, read: c => `窗玻璃結了霜，有人用手指在上面畫了四個記號：${glyphRow(c.g4, true)}` },
+      { id: 'frame', o: 'frame', x: .74, y: .3, lock: { type: 'digit', code: c => c.dateCode, give: 'ringA', title: '相框後的暗格', prompt: '相框後面有一個小暗格，四位數密碼（月月日日）。相框裡的照片……被拿走了。' }, done: '暗格空了。' },
+      { id: 'tbl', o: 'table', x: .46, y: .8 },
+      { id: 'diary', o: 'diary', x: .46, y: .73, read: () => '<b>守林人日記・最後一頁</b><br>我終於懂了。那些影子，就是那對戀人。<br>他們在霧裡放開了手，從此看不見彼此，只能一直在森林裡找。<br><br>如果有一天，有兩個人牽著手走出這座森林……<br>也許，他們就能安息了。' },
+    ] },
+    B: { title: '森林之心・西屋', objs: [
+      { id: 'photo', o: 'photo', x: .26, y: .34, read: c => `一張舊照片，是那對戀人，笑得很開心。<br>背面寫著：<p class="poem" style="font-size:20px">「我們第一次見面，是 ${c.date[0]} 月 ${c.date[1]} 日。」</p>` },
+      { id: 'ring', o: 'ringbox', x: .36, y: .7, lock: { type: 'glyph', code: c => c.g4, give: 'ringB', title: '戒指盒', prompt: '戒指盒的蓋子上有四個符文凹槽。' }, done: '戒指盒空了。' },
+      { id: 'piano', o: 'piano', x: .76, y: .62, read: () => '鋼琴上積滿灰塵，<br>可是有一組琴鍵是乾淨的，像剛剛才有人彈過。' },
+    ] } },
+];
+
+let roomKey = null, selItem = null;
+const roomOpen = () => $('room').classList.contains('show');
+function openRoom(key) {
+  roomKey = key; me.inRoom = key; selItem = null;
+  $('room').classList.add('show'); stick.id = null;
+  $('rTitle').textContent = CABINS[world.lv][key].title;
+  Snd.sfx('door'); layoutRoom(); renderRoomUI();
+}
+function closeRoom() { $('room').classList.remove('show'); roomKey = null; if (me) me.inRoom = null; closeModal(); }
+function layoutRoom() {
+  const st = $('rStage'), W = st.clientWidth, H = st.clientHeight, fit = Math.min(W / 1000, H / 600);
+  const k = W / H < 1.35 ? Math.min(H / 600, W * 3.3 / 1000) : fit, w = 1000 * k, h = 600 * k;   // 直式：房間撐滿高度，左右滑動看
+  const c = $('rcv'), d = Math.min(2.5, devicePixelRatio || 1);
+  c.style.width = w + 'px'; c.style.height = h + 'px'; c.style.left = Math.max(0, (W - w) / 2) + 'px'; c.style.top = (H - h) / 2 + 'px';
+  $('rPan').style.display = w > W + 4 ? 'block' : 'none';
+  if (w > W) st.scrollLeft = (w - W) / 2;
+  c.width = Math.round(w * d); c.height = Math.round(h * d);
+  const hs = $('rHots'); hs.style.width = w + 'px'; hs.style.height = h + 'px'; hs.style.left = c.style.left; hs.style.top = c.style.top;
+}
+addEventListener('resize', () => { if (roomOpen()) layoutRoom(); });
+function renderRoomUI() {
+  if (!roomOpen() || !world) return;
+  const room = CABINS[world.lv][roomKey];
+  $('rHots').innerHTML = room.objs.filter(o => o.read || o.lock || o.take || o.use).map(o => {
+    const done = world.flags[o.id], s = OBJ_SIZE[o.o] || [120, 120];
+    return `<button class="hot${done ? ' done' : ''}" data-id="${o.id}" style="left:${o.x * 100}%;top:${o.y * 100}%;width:${s[0] / 10}%;height:${s[1] / 6}%"><i></i></button>`;
+  }).join('');
+  $('rItems').innerHTML = world.items.length || world.keys ? world.items.map(it => `<button class="item${selItem === it ? ' on' : ''}" data-it="${it}">${ITEMS[it].e} ${ITEMS[it].n}</button>`).join('') + (world.keys ? `<span class="item">🗝️ 舊鑰匙 ×${world.keys}</span>` : '') : '<span class="sub">（還沒有撿到東西）</span>';
+  $('rHint').textContent = selItem ? `拿著「${ITEMS[selItem].n}」：點房間裡的東西使用，或點另一樣物品組合` : '點發亮的地方調查・點物品可以拿起來用';
+  if (mode === 'solo') $('rMate').textContent = '';
+  else { const nm = names[mate.slot] || '對方'; $('rMate').textContent = !mate.inRoom ? `${nm}：在森林裡` : mate.inRoom === roomKey ? `${nm} 也在這間小屋` : `${nm}：在另一間小屋`; }
+}
+$('rHots').onclick = e => { const b = e.target.closest('.hot'); if (!b) return; hotAction(CABINS[world.lv][roomKey].objs.find(o => o.id === b.dataset.id)); };
+$('rItems').onclick = e => { const b = e.target.closest('button.item'); if (!b) return; pickItem(b.dataset.it); };
+$('rLeave').onclick = () => { closeRoom(); Snd.sfx('door'); };
+function pickItem(it) {
+  if (!selItem || selItem === it) { selItem = selItem === it ? null : it; renderRoomUI(); renderBag(); return; }
+  const r = RECIPES.findIndex(r => (r.a === selItem && r.b === it) || (r.b === selItem && r.a === it));
+  selItem = null;
+  if (r < 0) { toast('這兩樣東西湊不在一起'); Snd.sfx('bad'); } else act({ a: 'combine', r });
+  renderRoomUI(); renderBag();
+}
+function hotAction(o) {
+  const c = cabinCodes(), done = world.flags[o.id];
+  Snd.sfx('step');
+  if (selItem) {
+    const it = selItem; selItem = null;
+    if (o.use && o.use.need === it && !done) { act({ a: 'use', f: o.id, need: it }); readBox(o.use.text); }
+    else { toast('沒有反應……'); Snd.sfx('bad'); }
+    renderRoomUI(); return;
+  }
+  if (o.read) return readBox(o.read(c));
+  if (done) return readBox(o.done);
+  if (o.lock) return codeLock(o, c);
+  if (o.take) { act({ a: 'take', f: o.id, give: o.take }); return readBox(o.text); }
+  if (o.use) return readBox(`${o.hint}<p class="sub">（從下面的物品欄選一樣東西，再點這裡）</p>`);
+}
+function readBox(html) { openModal(`<div class="poem" style="text-align:left">${html}</div><button class="main" id="mOk">好</button>`); $('mOk').onclick = closeModal; }
+function codeLock(o, c) {
+  const L = o.lock, code = L.code(c), cur = [];
+  const keysHTML = L.type === 'digit' ? [...Array(10).keys()].map(i => [i, `<span class="big">${i}</span>`])
+    : L.type === 'glyph' ? GLYPHS.map((g, i) => [i, glyphSVG(i) + g.n])
+    : L.type === 'color' ? COLORS.map(([n, col], i) => [i, `<span class="sw" style="background:${col}"></span>${n}`])
+    : ARROWS.map((a, i) => [i, `<span class="big">${a}</span>`]);
+  const face = v => L.type === 'digit' ? `<span class="big">${v}</span>` : L.type === 'glyph' ? glyphSVG(v) : L.type === 'color' ? `<span class="sw" style="background:${COLORS[v][1]};width:30px;height:30px"></span>` : `<span class="big">${ARROWS[v]}</span>`;
+  openModal(`<h2>${L.title}</h2><p class="poem">${L.prompt}</p><div class="slots" id="slots"></div>
+    <div class="pad p-${L.type}" id="pad">${keysHTML.map(([v, h]) => `<button data-v="${v}">${h}</button>`).join('')}</div>
+    <div class="row"><button id="mDel">⌫ 刪掉</button><button class="main" id="mTry">試試看</button></div><button class="ghost" id="mX">先不要</button>`);
+  const draw = () => { $('slots').innerHTML = code.map((_, k) => `<div>${cur[k] != null ? face(cur[k]) : ''}</div>`).join(''); };
+  draw();
+  $('pad').onclick = e => { const b = e.target.closest('button'); if (!b || cur.length >= code.length) return; cur.push(+b.dataset.v); Snd.sfx('step'); draw(); };
+  $('mDel').onclick = () => { cur.pop(); draw(); };
+  $('mTry').onclick = () => {
+    if (cur.length < code.length) return toast('還沒填滿');
+    if (cur.every((v, i) => v === code[i])) { act({ a: 'solve', f: o.id, give: L.give }); closeModal(); }
+    else { Snd.sfx('bad'); toast('喀。鎖沒有動……'); cur.length = 0; draw(); }
+  };
+  $('mX').onclick = closeModal;
+}
+// 森林裡的背包
+function renderBag() {
+  if (!$('bagList')) return;
+  $('bagList').innerHTML = world.items.length || world.keys ? world.items.map(it => `<button class="item${selItem === it ? ' on' : ''}" data-it="${it}">${ITEMS[it].e} ${ITEMS[it].n}</button>`).join('') + (world.keys ? `<span class="item">🗝️ 舊鑰匙 ×${world.keys}</span>` : '') : '<span class="sub">背包是空的</span>';
+}
+function openBag() {
+  selItem = null;
+  openModal(`<h2>背包</h2><p class="sub">兩個人共用。點一樣、再點另一樣可以組合。</p><div class="items" id="bagList"></div><button class="main" id="mOk">關閉</button>`);
+  renderBag(); $('bagList').onclick = e => { const b = e.target.closest('button.item'); if (b) pickItem(b.dataset.it); };
+  $('mOk').onclick = () => { selItem = null; closeModal(); };
+}
+
+// 小屋室內（1000×600 的畫布座標）
+const OBJ_SIZE = { window: [150, 170], shelf: [170, 220], note: [80, 60], box: [90, 70], clock: [120, 120], dresser: [190, 150], bed: [260, 150], paper: [120, 140], diary: [90, 60], safe: [150, 160], mirror: [120, 180], floorpaper: [110, 60], painting: [200, 140], wardrobe: [170, 300], footprints: [420, 60], musicbox: [110, 80], rocker: [150, 170], lamp: [70, 110], chest: [170, 110], doll: [80, 110], tally: [200, 110], frame: [120, 150], photo: [120, 150], ringbox: [80, 60], piano: [260, 200], table: [280, 120], crate: [160, 110] };
+function drawRoom(t) {
+  const c = $('rcv'), g = c.getContext('2d'), k = c.width / 1000, room = CABINS[world.lv][roomKey];
+  g.setTransform(k, 0, 0, k, 0, 0);
+  const wg = g.createLinearGradient(0, 0, 0, 430); wg.addColorStop(0, '#2a1b12'); wg.addColorStop(1, '#3d2919');
+  g.fillStyle = wg; g.fillRect(0, 0, 1000, 430);
+  for (let y = 0; y < 430; y += 36) { g.fillStyle = y / 36 % 2 ? 'rgba(0,0,0,.12)' : 'rgba(255,220,180,.03)'; g.fillRect(0, y, 1000, 36); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, y + 34, 1000, 2); }
+  const fg = g.createLinearGradient(0, 430, 0, 600); fg.addColorStop(0, '#3a2516'); fg.addColorStop(1, '#1c120b');
+  g.fillStyle = fg; g.fillRect(0, 430, 1000, 170);
+  g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2; for (let x = -400; x < 1400; x += 90) { g.beginPath(); g.moveTo(500 + (x - 500) * .55, 430); g.lineTo(x, 600); g.stroke(); }
+  g.fillStyle = '#1a0f09'; g.fillRect(0, 424, 1000, 10);
+  const list = room.objs.slice().sort((a, b) => a.y - b.y);
+  for (const o of list) { g.save(); g.translate(o.x * 1000, o.y * 600); (OBJ[o.o] || (() => {}))(g, o, t, !!world.flags[o.id]); g.restore(); }
+  // 燭光
+  const fl = .9 + Math.sin(t * 9) * .04 + Math.sin(t * 13.7) * .03;
+  const lg = g.createRadialGradient(500, 330, 60, 500, 330, 620 * fl); lg.addColorStop(0, 'rgba(0,0,0,0)'); lg.addColorStop(.6, 'rgba(0,0,0,.18)'); lg.addColorStop(1, 'rgba(0,0,0,.6)');
+  g.fillStyle = lg; g.fillRect(0, 0, 1000, 600);
+  g.globalCompositeOperation = 'lighter'; const wl = g.createRadialGradient(500, 330, 0, 500, 330, 380); wl.addColorStop(0, `rgba(255,170,90,${.12 * fl})`); wl.addColorStop(1, 'rgba(255,170,90,0)'); g.fillStyle = wl; g.fillRect(0, 0, 1000, 600);
+  for (let i = 0; i < 18; i++) { const x = (i * 137 + t * 9 * (1 + i % 3)) % 1000, y = 80 + ((i * 71 + t * 6) % 420); g.fillStyle = `rgba(255,220,170,${.12 + .1 * Math.sin(t + i)})`; g.fillRect(x, y, 2, 2); }
+  g.globalCompositeOperation = 'source-over';
+}
+const wood = (g, x, y, w, h, c1 = '#5b3a22', c2 = '#3a2414') => { const gr = g.createLinearGradient(x, y, x, y + h); gr.addColorStop(0, c1); gr.addColorStop(1, c2); g.fillStyle = gr; g.fillRect(x, y, w, h); };
+const OBJ = {
+  window(g, o, t) {
+    wood(g, -80, -90, 160, 180, '#4a2f1b', '#2f1d10');
+    const sk = g.createLinearGradient(0, -78, 0, 78); sk.addColorStop(0, '#0d1a2c'); sk.addColorStop(1, '#2a3a44'); g.fillStyle = sk; g.fillRect(-68, -78, 136, 156);
+    g.save(); g.beginPath(); g.rect(-68, -78, 136, 156); g.clip();
+    g.fillStyle = '#e8eef5'; g.beginPath(); g.arc(30, -40, 14, 0, 7); g.fill(); g.fillStyle = '#0d1a2c'; g.beginPath(); g.arc(36, -44, 12, 0, 7); g.fill();
+    for (let i = 0; i < 4; i++) { g.fillStyle = `rgba(200,215,225,${.1 + .05 * i})`; g.beginPath(); g.ellipse(-68 + ((t * 8 + i * 40) % 180), 30 + i * 10, 60, 14, 0, 0, 7); g.fill(); }
+    if (Math.sin(t * .5) > .93) { g.fillStyle = 'rgba(0,0,0,.85)'; g.beginPath(); g.ellipse(-20, 40, 9, 26, 0, 0, 7); g.fill(); g.beginPath(); g.arc(-20, 8, 8, 0, 7); g.fill(); }
+    if (o.frost) { g.fillStyle = 'rgba(220,235,245,.35)'; g.fillRect(-68, -78, 136, 156); }
+    g.restore();
+    g.fillStyle = '#2f1d10'; g.fillRect(-3, -78, 6, 156); g.fillRect(-68, -3, 136, 6);
+    g.fillStyle = '#4a2f1b'; g.fillRect(-90, 88, 180, 10);
+  },
+  shelf(g) {
+    wood(g, -85, -110, 170, 220);
+    g.fillStyle = '#1f130b'; for (const y of [-100, -30, 40]) g.fillRect(-75, y, 150, 62);
+    const cs = ['#7a2e2e', '#2e4a7a', '#3e6a3e', '#7a6a2e', '#5a2e6a', '#6a4a2e'];
+    for (const [r, y] of [[0, -98], [1, -28], [2, 42]]) for (let i = 0; i < 7; i++) { g.fillStyle = cs[(i * 3 + r) % 6]; g.fillRect(-70 + i * 20, y + 8 + (i % 3) * 4, 16, 52 - (i % 3) * 4); }
+  },
+  table(g) { g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(0, 55, 150, 16, 0, 0, 7); g.fill(); wood(g, -140, -30, 280, 22, '#6b4628', '#4a2f1b'); g.fillStyle = '#3a2414'; g.fillRect(-125, -8, 16, 62); g.fillRect(109, -8, 16, 62); },
+  crate(g) { wood(g, -80, -40, 160, 100, '#6b4a2a', '#4a321c'); g.strokeStyle = '#2f1f10'; g.lineWidth = 4; g.strokeRect(-80, -40, 160, 100); g.beginPath(); g.moveTo(-80, -40); g.lineTo(80, 60); g.stroke(); },
+  note(g) { g.rotate(-.12); g.fillStyle = '#e6dcc4'; g.fillRect(-30, -22, 60, 40); g.fillStyle = 'rgba(40,30,20,.5)'; for (let i = 0; i < 4; i++) g.fillRect(-22, -14 + i * 8, 40 - i * 6, 2); },
+  box(g, o, t, done) { wood(g, -40, -26, 80, 46, '#7a5232', '#4a2f1b'); g.fillStyle = '#c99a3c'; g.fillRect(-8, -8, 16, 12); if (done) { g.fillStyle = '#2a1a10'; g.fillRect(-40, -40, 80, 14); } else { g.fillStyle = '#5b3a22'; g.fillRect(-42, -32, 84, 10); } },
+  clock(g) { g.fillStyle = '#4a2f1b'; g.beginPath(); g.arc(0, 0, 58, 0, 7); g.fill(); g.fillStyle = '#d9caa8'; g.beginPath(); g.arc(0, 0, 48, 0, 7); g.fill(); const c = world && cabinCodes().clock; g.strokeStyle = '#1a120a'; g.lineCap = 'round'; const a = c[1] / 60 * 6.283, b = ((c[0] % 12) + c[1] / 60) / 12 * 6.283; g.lineWidth = 5; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.sin(b) * 24, -Math.cos(b) * 24); g.stroke(); g.lineWidth = 3; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.sin(a) * 38, -Math.cos(a) * 38); g.stroke(); for (let i = 0; i < 12; i++) { const r = i / 12 * 6.283; g.fillStyle = '#3a2a1a'; g.fillRect(Math.sin(r) * 42 - 2, -Math.cos(r) * 42 - 2, 4, 4); } },
+  dresser(g, o, t, done) { wood(g, -95, -60, 190, 130); g.fillStyle = '#2f1d10'; for (let i = 0; i < 3; i++) { g.fillRect(-85, -50 + i * 40, 170, 34); g.fillStyle = '#c99a3c'; g.fillRect(-10, -36 + i * 40, 20, 6); g.fillStyle = '#2f1d10'; } if (done) { g.fillStyle = '#1a0f08'; g.fillRect(-85, -50, 170, 10); wood(g, -88, -72, 176, 26, '#6b4628', '#4a2f1b'); } },
+  bed(g) { wood(g, -130, -50, 20, 110); wood(g, 110, -20, 20, 80); g.fillStyle = '#6b5a4a'; g.fillRect(-112, 0, 224, 44); g.fillStyle = '#8a3a3a'; g.fillRect(-60, -6, 172, 46); g.fillStyle = '#d8cfc0'; g.beginPath(); g.ellipse(-82, -6, 26, 14, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(-82, 16, 26, 12, 0, 0, 7); g.fill(); },
+  paper(g) { g.rotate(.05); g.fillStyle = '#e6dcc4'; g.beginPath(); g.moveTo(-50, -60); g.lineTo(50, -60); g.lineTo(50, 10); for (let x = 50; x >= -50; x -= 10) g.lineTo(x, 10 + (x / 10 % 2 ? 6 : -2)); g.closePath(); g.fill(); g.fillStyle = '#2a1c12'; g.font = '34px Georgia,serif'; g.textAlign = 'center'; g.fillText('? ? ? ?', 0, -10); g.fillStyle = '#7a6a5a'; g.beginPath(); g.arc(0, -52, 4, 0, 7); g.fill(); },
+  floorpaper(g) { g.rotate(-.2); g.fillStyle = '#d8ccb0'; g.fillRect(-45, -14, 90, 30); },
+  diary(g) { g.rotate(-.08); g.fillStyle = '#4a1f1f'; g.fillRect(-40, -22, 80, 38); g.fillStyle = '#e6dcc4'; g.fillRect(-36, -26, 72, 34); g.strokeStyle = 'rgba(40,30,20,.5)'; g.lineWidth = 1.5; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-30, -18 + i * 7); g.lineTo(-4, -18 + i * 7); g.moveTo(4, -18 + i * 7); g.lineTo(30, -18 + i * 7); g.stroke(); } },
+  safe(g, o, t, done) { g.fillStyle = '#2a2e33'; g.fillRect(-70, -75, 140, 150); g.fillStyle = '#3c4148'; g.fillRect(-60, -65, 120, 130); g.fillStyle = '#1a1c1f'; g.beginPath(); g.arc(0, -5, 26, 0, 7); g.fill(); g.strokeStyle = '#9aa0a8'; g.lineWidth = 3; g.beginPath(); g.arc(0, -5, 20, 0, 7); g.stroke(); if (done) { g.fillStyle = '#0a0a0c'; g.fillRect(-60, -65, 40, 130); } },
+  mirror(g, o, t) { g.fillStyle = '#5a4020'; g.beginPath(); g.ellipse(0, 0, 58, 88, 0, 0, 7); g.fill(); const mg = g.createLinearGradient(-40, -70, 40, 70); mg.addColorStop(0, '#5a6a74'); mg.addColorStop(1, '#1e262c'); g.fillStyle = mg; g.beginPath(); g.ellipse(0, 0, 48, 78, 0, 0, 7); g.fill(); g.fillStyle = `rgba(0,0,0,${.35 + .25 * Math.sin(t * .7)})`; g.beginPath(); g.ellipse(8, 20, 14, 40, 0, 0, 7); g.fill(); g.beginPath(); g.arc(8, -26, 12, 0, 7); g.fill(); },
+  painting(g) { wood(g, -100, -70, 200, 140, '#7a5a2a', '#4a3416'); g.fillStyle = '#16241c'; g.fillRect(-88, -58, 176, 116); for (let i = 0; i < 7; i++) { g.fillStyle = '#0a140f'; g.beginPath(); g.moveTo(-80 + i * 26, 58); g.lineTo(-68 + i * 26, -30 - (i % 3) * 10); g.lineTo(-56 + i * 26, 58); g.fill(); } g.fillStyle = 'rgba(130,245,230,.35)'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(-60 + i * 40, 20, 3, 0, 7); g.fill(); } },
+  wardrobe(g, o, t, done) { wood(g, -85, -150, 170, 300, '#5b3a22', '#2f1d10'); g.fillStyle = '#2a1a0e'; g.fillRect(-2, -140, 4, 280); g.fillStyle = '#c99a3c'; g.fillRect(-14, -10, 8, 20); g.fillRect(6, -10, 8, 20); g.fillStyle = '#1a1c1f'; g.fillRect(-16, 18, 32, 26); g.fillStyle = '#9aa0a8'; g.font = '16px sans-serif'; g.textAlign = 'center'; g.fillText('✥', 0, 37); if (done) { g.fillStyle = '#120a06'; g.fillRect(2, -140, 78, 280); } },
+  footprints(g) { g.fillStyle = 'rgba(70,45,25,.75)'; for (let i = 0; i < 9; i++) { g.save(); g.translate(-190 + i * 48, (i % 2) * 14 - 6); g.rotate(.3 * Math.sin(i)); g.beginPath(); g.ellipse(0, 0, 9, 16, 0, 0, 7); g.fill(); g.restore(); } },
+  musicbox(g, o, t, done) { wood(g, -50, -30, 100, 60, '#8a5a3a', '#5a3a22'); g.fillStyle = '#c99a3c'; g.fillRect(-50, -34, 100, 6); g.fillStyle = 'rgba(130,245,230,.6)'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(-30 + i * 20, 0, 5, 0, 7); g.fill(); } if (done) { g.save(); g.translate(0, -40); g.rotate(t * 2); g.fillStyle = '#e6dcc4'; g.fillRect(-2, -14, 4, 14); g.restore(); } },
+  rocker(g, o, t) { g.rotate(Math.sin(t * 1.3) * .05); g.strokeStyle = '#4a2f1b'; g.lineWidth = 8; g.beginPath(); g.arc(0, 30, 90, .3 * Math.PI, .7 * Math.PI); g.stroke(); wood(g, -50, -10, 100, 16); wood(g, -48, -90, 14, 90); wood(g, 34, -90, 14, 90); for (let i = 0; i < 4; i++) wood(g, -34, -80 + i * 18, 68, 8); },
+  lamp(g, o, t, done) { g.fillStyle = '#3a3a3c'; g.fillRect(-18, 30, 36, 12); g.fillStyle = 'rgba(220,235,240,.35)'; g.beginPath(); g.ellipse(0, -5, 24, 36, 0, 0, 7); g.fill(); g.fillStyle = '#3a3a3c'; g.fillRect(-6, -50, 12, 10); if (done) { g.globalCompositeOperation = 'lighter'; const lg = g.createRadialGradient(0, 0, 0, 0, 0, 160); lg.addColorStop(0, 'rgba(255,200,110,.55)'); lg.addColorStop(1, 'rgba(255,200,110,0)'); g.fillStyle = lg; g.fillRect(-160, -160, 320, 320); g.fillStyle = '#ffe9a8'; g.beginPath(); g.ellipse(0, 0, 6, 12 + Math.sin(t * 9) * 2, 0, 0, 7); g.fill(); g.globalCompositeOperation = 'source-over'; } },
+  chest(g, o, t, done) { wood(g, -85, -30, 170, 80, '#6b4628', '#3a2414'); g.fillStyle = done ? '#1a0f08' : '#7a5232'; g.beginPath(); g.ellipse(0, -30, 85, done ? 8 : 26, 0, Math.PI, 0); g.fill(); g.fillStyle = '#2a2a2c'; g.fillRect(-85, -8, 170, 8); g.fillStyle = '#c99a3c'; g.fillRect(-10, -14, 20, 22); },
+  doll(g, o, t) { g.rotate(Math.sin(t * .3) > .9 ? .25 : 0); g.fillStyle = '#9a7a6a'; g.fillRect(-20, -10, 40, 50); g.fillStyle = '#c8b09a'; g.beginPath(); g.arc(0, -28, 22, 0, 7); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(-8, -30, 4, 0, 7); g.fill(); g.beginPath(); g.arc(8, -30, 4, 0, 7); g.fill(); g.strokeStyle = '#5a2a2a'; g.lineWidth = 2; g.beginPath(); g.moveTo(-8, -18); g.lineTo(8, -18); g.stroke(); },
+  tally(g) { g.strokeStyle = 'rgba(220,200,170,.5)'; g.lineWidth = 3; for (let i = 0; i < 14; i++) { const x = -90 + i * 13; g.beginPath(); g.moveTo(x, -40 + (i % 3) * 3); g.lineTo(x + 2, 40); g.stroke(); } },
+  frame(g) { wood(g, -60, -75, 120, 150, '#8a6a3a', '#5a4020'); g.fillStyle = '#1a1410'; g.fillRect(-48, -63, 96, 126); },
+  photo(g) { g.rotate(-.06); wood(g, -60, -75, 120, 150, '#8a6a3a', '#5a4020'); g.fillStyle = '#8a7a64'; g.fillRect(-48, -63, 96, 126); g.fillStyle = '#3a2e24'; g.beginPath(); g.arc(-16, -18, 12, 0, 7); g.fill(); g.beginPath(); g.arc(16, -18, 12, 0, 7); g.fill(); g.fillRect(-30, -4, 28, 50); g.fillRect(2, -4, 28, 50); },
+  ringbox(g, o, t, done) { g.fillStyle = '#5a1a2a'; g.fillRect(-36, -20, 72, 40); g.fillStyle = '#7a2a3a'; g.fillRect(-38, done ? -40 : -28, 76, done ? 10 : 12); g.fillStyle = 'rgba(130,245,230,.6)'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(-21 + i * 14, 0, 4, 0, 7); g.fill(); } },
+  piano(g) { wood(g, -130, -100, 260, 200, '#2a1a12', '#140c08'); g.fillStyle = '#e6dcc4'; g.fillRect(-120, 0, 240, 30); g.fillStyle = '#111'; for (let i = 0; i < 16; i++) if (i % 7 !== 2 && i % 7 !== 6) g.fillRect(-114 + i * 15, 0, 9, 18); g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(-30, 0, 45, 30); },
+};
 
 // ================= 世界狀態（房主說了算）=================
 let mode = null;            // 'solo' | 'host' | 'guest'
@@ -296,13 +615,14 @@ let names = { P1: '', P2: '' }, chars = { P1: 'rabbit', P2: 'fox' }, roomCode = 
 const mySlot = () => mode === 'guest' ? 'P2' : 'P1';
 
 function newWorld(lv) {
-  return { lv, run: Math.random().toString(36).slice(2, 8), seed: Math.floor(Math.random() * 1e9), levers: {}, keys: 0, taken: {}, doors: {}, runes: {}, clear: null, t0: Date.now() };
+  return { lv, run: Math.random().toString(36).slice(2, 8), seed: Math.floor(Math.random() * 1e9), levers: {}, keys: 0, taken: {}, doors: {}, runes: {}, flags: {}, items: [], seals: {}, timer: S.timed ? 20 * 60 : 0, clear: null, t0: Date.now() };
 }
 function mkPlayer(slot) {
   const sp = Lv.spawn[slot], off = Lv.spec.spawn.P1 === Lv.spec.spawn.P2 ? (slot === 'P1' ? -.18 : .18) : 0;
-  return { slot, x: sp.x + .5 + off, y: sp.y + .5, tx: sp.x + .5 + off, ty: sp.y + .5, dir: 'down', moving: false, ph: 0, cp: { x: sp.x + .5 + off, y: sp.y + .5 }, caught: 0, say: null, sayT: 0, fireSeen: {} };
+  return { slot, x: sp.x + .5 + off, y: sp.y + .5, tx: sp.x + .5 + off, ty: sp.y + .5, dir: 'down', moving: false, ph: 0, cp: { x: sp.x + .5 + off, y: sp.y + .5 }, caught: 0, say: null, sayT: 0, fireSeen: {}, inRoom: null };
 }
 function loadLevel() {
+  if (roomOpen()) closeRoom();
   Lv = buildLevel(world.lv); loadedRun = world.run; lvT0 = performance.now(); myCaught = 0; mateCaught = 0;
   players = [mkPlayer('P1'), mkPlayer('P2')];
   active = mode === 'guest' ? 1 : 0; setMeMate();
@@ -317,6 +637,7 @@ function loadLevel() {
   show(null); if (resumed) { hideCard(); toast('回到森林裡了'); } else showIntro();
   Snd.start();
 }
+function oilLeft() { return world && world.timer ? Math.max(0, world.timer - (Date.now() - world.t0) / 1000) : null; }
 function setMeMate() { me = players[active]; mate = players[1 - active]; }
 
 function plateDown(t) { return players.some(p => p && Math.hypot(p.x - t.x - .5, p.y - t.y - .5) < .48); }
@@ -324,12 +645,13 @@ function linkOpen(l) {
   if (l.k === 'open') return true;
   if (l.k === 'rune') return !!world.runes[l.id];
   if (l.k === 'door') return !!world.doors[l.id];
+  if (l.k === 'seal') return !!world.seals[l.id];
   return Lv.things.some(t => t.opens === l.id && (t.t === 'plate' ? plateDown(t) : !!world.levers[t.id]));
 }
 function solid(tx, ty) {
   if (tx < 0 || ty < 0 || tx >= Lv.W || ty >= Lv.H) return true;
   const i = ty * Lv.W + tx;
-  if (Lv.tiles[i]) return true;
+  if (Lv.tiles[i] || Lv.block.has(i)) return true;
   const l = Lv.linkAt[i]; return !!(l && !linkState[l.id]);
 }
 const PR = .27;
@@ -369,11 +691,12 @@ function nearest() {
     const d = Math.hypot(me.x - t.x - .5, me.y - t.y - .5);
     if (t.t === 'lever' && d < 1.3) consider({ kind: 'lever', t }, d, world.levers[t.id] ? '推回' : '拉下');
     if (t.t === 'stone' && d < 1.3) consider({ kind: 'stone', t }, d, '看');
+    if (t.t === 'cabin' && d < 1.4) consider({ kind: 'cabin', t }, d - .2, '進入');
   }
   for (const l of Lv.links) {
-    if (l.k !== 'rune' && l.k !== 'door' || linkState[l.id]) continue;
+    if (l.k !== 'rune' && l.k !== 'door' && l.k !== 'seal' || linkState[l.id]) continue;
     const d = Math.hypot(me.x - l.x - .5, me.y - l.y - .5);
-    if (d < 1.35) consider({ kind: l.k, l }, d, l.k === 'rune' ? '解鎖' : '開門');
+    if (d < 1.35) consider({ kind: l.k, l }, d, l.k === 'rune' ? '解鎖' : l.k === 'seal' ? '霧牆' : '開門');
   }
   return best;
 }
@@ -382,6 +705,11 @@ function doAct() {
   if (n.kind === 'lever') { act({ a: 'lever', id: n.t.id }); Snd.sfx('lever'); }
   else if (n.kind === 'stone') showStone(n.t.rune);
   else if (n.kind === 'rune') showLock(n.l.id);
+  else if (n.kind === 'cabin') openRoom(n.t.room);
+  else if (n.kind === 'seal') {
+    if (world.items.includes(n.l.need)) act({ a: 'seal', id: n.l.id });
+    else readBox(`一道濃得化不開的<b>霧牆</b>，擋住了去路。<br>${{ bellFull: '旁邊的木牌寫著：「鈴聲，能讓霧散去。」', charm: '霧牆上浮著一個圓形的凹痕，像在等一塊護身符。', rings: '霧牆中間有一扇門，門上有兩個小小的、圓形的凹槽。' }[n.l.need]}`);
+  }
   else if (n.kind === 'door') { if (world.keys > 0) act({ a: 'door', id: n.l.id }); else { toast('門鎖著……要找到鑰匙'); Snd.sfx('bad'); } }
 }
 function act(a) { if (mode === 'guest') send({ type: 'a', run: world.run, ...a }); else applyAct(a); }
@@ -396,9 +724,13 @@ function applyAct(a) {
     if (ok) world.runes[a.id] = 1;
     event({ e: ok ? 'runeOk' : 'runeBad' });
   }
+  else if (a.a === 'solve' || a.a === 'take') { if (world.flags[a.f]) return; world.flags[a.f] = 1; if (a.give === 'key') world.keys++; else world.items.push(a.give); event({ e: 'got', it: a.give }); }
+  else if (a.a === 'use') { if (world.flags[a.f] || !world.items.includes(a.need)) return; world.flags[a.f] = 1; world.items = world.items.filter(x => x !== a.need); event({ e: 'used' }); }
+  else if (a.a === 'combine') { const r = RECIPES[a.r]; if (!r || !world.items.includes(r.a) || !world.items.includes(r.b)) return; world.items = world.items.filter(x => x !== r.a && x !== r.b); world.items.push(r.out); event({ e: 'combined', r: a.r }); }
+  else if (a.a === 'seal') { const l = Lv.links.find(l => l.id === a.id); if (!l || world.seals[a.id] || !world.items.includes(l.need)) return; world.seals[a.id] = 1; event({ e: 'seal' }); }
   else if (a.a === 'next') { if (world.clear) nextChapter(); return; }
   else if (a.a === 'restart') { startChapter(world.lv); return; }
-  pushWorld();
+  pushWorld(); renderRoomUI(); renderBag();
 }
 function event(ev) { if (mode !== 'solo') send({ type: 'ev', run: world.run, ...ev }); onEvent(ev, true); }
 function onEvent(ev) {
@@ -408,13 +740,17 @@ function onEvent(ev) {
   else if (ev.e === 'runeBad') { Snd.sfx('bad'); toast('符文不對。樹林裡有東西在笑……'); }
   else if (ev.e === 'caught') { mateCaught++; toast(`${names[mate.slot] || '對方'}被影子拖走了……`); }
   else if (ev.e === 'ping') { pings.push({ x: ev.x, y: ev.y, t: 0, mine: false }); Snd.sfx('ping'); }
+  else if (ev.e === 'got') { Snd.sfx('key'); toast(`得到了：${ev.it === 'key' ? '🗝️ 舊鑰匙' : ITEMS[ev.it].e + ' ' + ITEMS[ev.it].n}`); }
+  else if (ev.e === 'used') { Snd.sfx('rune'); toast('油燈亮了……燈籠也跟著亮了起來'); }
+  else if (ev.e === 'combined') { Snd.sfx('rune'); toast(`${ITEMS[RECIPES[ev.r].out].e} ${RECIPES[ev.r].text}`, 3800); }
+  else if (ev.e === 'seal') { Snd.sfx('rune'); toast('霧牆慢慢散開了……'); }
   else if (ev.e === 'say') { mate.say = PHRASES[ev.i]; mate.sayT = 4; Snd.sfx('ping'); }
 }
 function pushWorld() { if (mode === 'host') { send({ type: 'w', w: world, names, chars }); sess.set({ mode, roomCode, world, names, chars }); } }
 
 // ================= 影子 =================
 function shadeFloor(i, reg) {
-  if (Lv.tiles[i] || Lv.reg[i] !== reg || Lv.linkAt[i]) return false;
+  if (Lv.tiles[i] || Lv.reg[i] !== reg || Lv.linkAt[i] || Lv.block.has(i)) return false;
   const x = i % Lv.W + .5, y = Math.floor(i / Lv.W) + .5;
   return !Lv.fires.some(f => Math.hypot(f.x + .5 - x, f.y + .5 - y) < 1.9) && !Lv.things.some(t => t.t === 'plate' && Math.hypot(t.x + .5 - x, t.y + .5 - y) < 1.6);
 }
@@ -518,7 +854,7 @@ function update(dt, now) {
   // 網路
   if (mode !== 'solo' && net) {
     if (now - lastPosSave > 1000) { lastPosSave = now; try { sessionStorage.setItem('mf-pos', JSON.stringify({ run: world.run, x: me.x, y: me.y, cp: me.cp })); } catch (e) {} }
-    if (now - lastSend > 80) { lastSend = now; send({ type: 'p', run: world.run, x: +me.x.toFixed(3), y: +me.y.toFixed(3), d: me.dir, m: me.moving ? 1 : 0, c: me.caught > 0 ? 1 : 0 }); }
+    if (now - lastSend > 80) { lastSend = now; send({ type: 'p', run: world.run, x: +me.x.toFixed(3), y: +me.y.toFixed(3), d: me.dir, m: me.moving ? 1 : 0, c: me.caught > 0 ? 1 : 0, r: me.inRoom || '' }); }
     if (mode === 'host' && now - lastShSend > 100 && shadows.length) { lastShSend = now; send({ type: 'sh', run: world.run, a: shadows.map(s => [+s.x.toFixed(2), +s.y.toFixed(2), s.gone > 0 ? 1 : 0, s.chase ? 1 : 0]) }); }
     $('netWarn').style.display = Date.now() - net.lastHeard > 6000 ? 'block' : 'none';
   }
@@ -527,7 +863,10 @@ function update(dt, now) {
   updateScares(dt);
   const ta = 1 - Math.pow(.0009, dt);
   cam.x = lerp(cam.x, me.x, ta); cam.y = lerp(cam.y, me.y, ta);
-  $('stat').textContent = `🗝️×${world.keys}　👁 ${myCaught + mateCaught}`;
+  const ol = oilLeft();
+  if (ol === 0 && !update.oilTold) { update.oilTold = world.run; toast('燈油燒完了……只剩一點點微光', 3500); Snd.sfx('bad'); }
+  if (update.oilTold && update.oilTold !== world.run) update.oilTold = null;
+  $('stat').textContent = `${ol != null ? `⏳${Math.floor(ol / 60)}:${String(Math.floor(ol % 60)).padStart(2, '0')}　` : ''}🗝️×${world.keys}　👁 ${myCaught + mateCaught}`;
   const n = nearest(); const b = $('bAct');
   if (n) { b.style.display = 'block'; b.textContent = n.label; } else b.style.display = 'none';
 }
@@ -876,6 +1215,13 @@ function drawLink(g, l, open, t) {
     g.fillStyle = fg; g.fillRect(x + 2, y + 2, T - 4, T - 2);
     g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1; g.strokeRect(x + 4, y + 4, T - 8, T - 6);
     for (let k = 0; k < 4; k++) { const bx = x + 7 + k * 9.2, by = y + 18; g.fillStyle = '#0d0f11'; g.beginPath(); g.roundRect(bx, by, 7.5, 9, 2); g.fill(); g.fillStyle = `rgba(110,240,220,${.35 + .3 * Math.sin(t * 2 + k)})`; ell(g, bx + 3.75, by + 4.5, 1.6, 2); }
+  } else if (l.k === 'seal') {
+    if (open) return;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < 9; k++) { const a = t * .6 + k * .7, px = cx + Math.cos(a) * 12, py = cy - 6 + Math.sin(a * 1.3) * 14, r = 16 + (k % 3) * 5;
+      const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, 'rgba(210,220,230,.28)'); gr.addColorStop(1, 'rgba(210,220,230,0)'); g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2); }
+    g.restore();
+    g.globalAlpha = .55 + .2 * Math.sin(t * 2); g.font = '18px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ITEMS[l.need].e, cx, cy - 4); g.globalAlpha = 1; g.textBaseline = 'alphabetic';
   } else if (l.k === 'door') {
     if (open) {
       g.fillStyle = '#0a0705'; g.fillRect(x + 6, y + 4, T - 12, T - 4);
@@ -893,6 +1239,22 @@ function drawLink(g, l, open, t) {
 }
 function drawThing(g, th, t) {
   const x = (th.x + .5) * T, y = (th.y + .5) * T;
+  if (th.t === 'cabin') {
+    const by = y + 20;
+    g.save(); g.translate(x, by); g.scale(1.3, 1.3); g.translate(-x, -by);
+    g.fillStyle = 'rgba(0,0,0,.5)'; ell(g, x, by + 2, 34, 9);
+    const wg = g.createLinearGradient(0, by - 40, 0, by); wg.addColorStop(0, '#5a3b22'); wg.addColorStop(1, '#3a2414');
+    g.fillStyle = wg; g.fillRect(x - 28, by - 40, 56, 40);
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; for (let k = 1; k < 5; k++) { g.beginPath(); g.moveTo(x - 28, by - 40 + k * 8); g.lineTo(x + 28, by - 40 + k * 8); g.stroke(); }
+    g.fillStyle = '#1e1a16'; g.beginPath(); g.moveTo(x - 36, by - 38); g.lineTo(x, by - 66); g.lineTo(x + 36, by - 38); g.fill();
+    g.fillStyle = 'rgba(70,100,60,.6)'; g.beginPath(); g.moveTo(x - 30, by - 40); g.lineTo(x - 6, by - 58); g.lineTo(x - 2, by - 52); g.lineTo(x - 22, by - 40); g.fill();
+    g.fillStyle = '#2a2420'; g.fillRect(x + 14, by - 64, 8, 16);
+    g.fillStyle = '#140c07'; g.fillRect(x - 7, by - 22, 14, 22);
+    g.fillStyle = `rgba(255,190,100,${.75 + .2 * Math.sin(t * 5 + th.x)})`; g.fillRect(x + 10, by - 30, 11, 9); g.fillRect(x - 21, by - 30, 11, 9);
+    g.fillStyle = '#2a1a10'; g.fillRect(x + 15, by - 30, 1.5, 9); g.fillRect(x - 16, by - 30, 1.5, 9);
+    for (let k = 0; k < 3; k++) { const u = (t * .3 + k / 3) % 1; g.fillStyle = `rgba(160,160,170,${.25 * (1 - u)})`; ell(g, x + 18 + Math.sin(u * 6 + k) * 4, by - 66 - u * 30, 4 + u * 6, 3 + u * 5); }
+    g.restore(); return;
+  }
   if (th.t === 'stone') {
     g.fillStyle = 'rgba(0,0,0,.5)'; ell(g, x, y + 10, 16, 6);
     const sg = g.createLinearGradient(x - 12, 0, x + 12, 0); sg.addColorStop(0, '#5a6066'); sg.addColorStop(1, '#2a2e33');
@@ -953,13 +1315,14 @@ function lights(t) {
   for (const p of players) {
     if (!p || (p.caught > 0 && p.caught < 1.2)) continue;
     const d = p.dir === 'left' ? 'left' : p.dir, [lx, ly] = lanternOff(d === 'left' ? 'right' : d);
-    out.push({ x: p.x + (p.dir === 'left' ? -lx : lx) / T, y: p.y + ly / T, r: Lv.spec.light * (1 + fl), c: HERO[chars[p.slot]].light, a: .5 });
+    out.push({ x: p.x + (p.dir === 'left' ? -lx : lx) / T, y: p.y + ly / T, r: (oilLeft() === 0 ? 1.3 : Lv.spec.light * (world.flags.lamp ? 1.35 : 1)) * (1 + fl), c: HERO[chars[p.slot]].light, a: .5 });
   }
   for (const f of Lv.fires) out.push({ x: f.x + .5, y: f.y + .4, r: 2.6 + fl * 3, c: '#ff9a3c', a: .55 });
   out.push({ x: Lv.exit.x + .5, y: Lv.exit.y + .5, r: 3.4, c: '#fff1cf', a: .45 });
   for (const m of Lv.mush) out.push({ x: m.x + .5, y: m.y + .5, r: .9, c: '#6ff0dd', a: .25 });
   for (const th of Lv.things) {
     if (th.t === 'stone') out.push({ x: th.x + .5, y: th.y, r: 1.1, c: '#7ff0e0', a: .3 });
+    if (th.t === 'cabin') out.push({ x: th.x + .5, y: th.y + .3, r: 1.8, c: '#ffbe6a', a: .4 });
     if (th.t === 'key' && !world.taken[th.id]) out.push({ x: th.x + .5, y: th.y + .4, r: .8, c: '#ffd36a', a: .4 });
     if (th.t === 'plate' && plateDown(th)) out.push({ x: th.x + .5, y: th.y + .5, r: 1, c: '#b98cff', a: .35 });
   }
@@ -1195,7 +1558,7 @@ function show(id) {
   $('hud').style.display = id ? 'none' : 'block';
 }
 function toast(msg, ms = 2600) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms); }
-const modalOpen = () => $('modal').classList.contains('show');
+const modalOpen = () => $('modal').classList.contains('show') || $('room').classList.contains('show');
 function openModal(html) { $('modalBox').innerHTML = html; $('modal').classList.add('show'); stick.id = null; }
 function closeModal() { $('modal').classList.remove('show'); }
 function showCard(html) { $('cardBox').innerHTML = html; $('card').classList.add('show'); stick.id = null; }
@@ -1261,6 +1624,10 @@ function renderChaps(el) {
     <span><span class="t">第${'一二三四五'[i]}章・${L.name}</span><br><span class="s">${i >= S.unlocked ? '🔒 先通過前一章' : L.poem.replace('<br>', '')}</span></span><span class="s">${S.best[i] ? '⏱ ' + Math.floor(S.best[i] / 60) + ':' + String(S.best[i] % 60).padStart(2, '0') : ''}</span></button>`).join('');
   el.onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; pickChap = +b.dataset.i; S.chap = pickChap; persist(); renderChaps($('chaps')); renderChaps($('chaps2')); };
 }
+function renderTimed() { $('bTimed').textContent = S.timed ? '⏳ 限時模式：開（每章燈油 20 分鐘，用完燈籠會只剩微光）' : '⏳ 限時模式：關'; }
+$('bTimed').onclick = () => { S.timed = !S.timed; persist(); renderTimed(); };
+renderTimed();
+$('bBag').onclick = () => openBag();
 $('name').oninput = () => { S.name = $('name').value.trim(); persist(); };
 function myName() { return S.name || HERO[S.char].name; }
 
@@ -1339,14 +1706,14 @@ function onMsg(m) {
       const prev = world; world = m.w;
       if (!world) { renderLobby(); show('lobby'); return; }
       if (world.run !== loadedRun) { clearShown = null; hideCard(); loadLevel(); }
-      else if (prev && prev.keys !== world.keys) {}
+      else { renderRoomUI(); renderBag(); }
       return;
     }
     else if (m.type === 'lobby') { joined = true; names = m.names; chars = m.chars; renderLobby(); return; }
     else if (m.type === 'sh' && world && m.run === world.run) { m.a.forEach((v, k) => { const s = shadows[k]; if (!s) return; s.rx = v[0]; s.ry = v[1]; if (v[2] && s.gone <= 0) { s.x = v[0]; s.y = v[1]; } s.gone = v[2] ? 1 : 0; s.chase = !!v[3]; if (Math.hypot(s.x - s.rx, s.y - s.ry) > 2) { s.x = s.rx; s.y = s.ry; } }); }
   }
   if (m.type === 'p' && world && m.run === world.run && mate) {
-    mate.tx = m.x; mate.ty = m.y; mate.dir = m.d; mate.moving = !!m.m; mate.caught = m.c ? 1.1 : 0;
+    mate.tx = m.x; mate.ty = m.y; mate.dir = m.d; mate.moving = !!m.m; mate.caught = m.c ? 1.1 : 0; if ((mate.inRoom || '') !== (m.r || '')) { mate.inRoom = m.r || null; renderRoomUI(); }
     if (Math.hypot(mate.x - m.x, mate.y - m.y) > 3) { mate.x = m.x; mate.y = m.y; }
   }
   else if (m.type === 'ev' && world && m.run === world.run) onEvent(m);
@@ -1392,7 +1759,7 @@ function leave() {
   if (net) send({ type: 'bye' });
   setTimeout(disconnect, 200);
   mode = null; world = null; Lv = null; players = []; me = mate = null; shadows = []; loadedRun = null;
-  hideCard(); closeModal(); sess.clear(); history.replaceState(null, '', location.pathname);
+  hideCard(); if (roomOpen()) closeRoom(); closeModal(); sess.clear(); history.replaceState(null, '', location.pathname);
   renderHome(); show('home');
 }
 
@@ -1412,7 +1779,7 @@ function resumeHost(o) {
 let lastT = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
-  try { if (Lv && world) update(dt, now); render(now); } catch (e) { console.error(e); }
+  try { if (Lv && world) update(dt, now); if (roomOpen()) drawRoom(now / 1000); else render(now); } catch (e) { console.error(e); }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
